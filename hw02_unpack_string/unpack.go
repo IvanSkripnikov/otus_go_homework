@@ -15,15 +15,17 @@ func Unpack(_ string) (string, error) {
 }
 
 func main() {
-	s := "a4bc2d5ea0"
+	s := "d\n5abc"
 	var symbolRune rune
 	var builder strings.Builder
 	zeroRune := rune("0"[0])
+	nlRune := rune("\n"[0])
+
 	sa := []byte(s)
 
 	for index, symbol := range sa {
 		symbolRune = rune(symbol)
-		if !unicode.IsDigit(symbolRune) && !unicode.IsLetter(symbolRune) {
+		if !unicode.IsDigit(symbolRune) && !unicode.IsLetter(symbolRune) && symbolRune != nlRune {
 			fmt.Println("shit1")
 		}
 
@@ -41,17 +43,23 @@ func main() {
 			}
 		}
 
-		if unicode.IsLetter(rune(symbol)) {
+		if unicode.IsLetter(rune(symbol)) || rune(symbol) == nlRune {
+			str := ""
+			if unicode.IsLetter(rune(symbol)) {
+				str = string(symbol)
+			} else {
+				str = `\n`
+			}
 			if index < len(s)-1 && rune(sa[index+1]) == zeroRune {
 				continue
 			}
-			if unicode.IsDigit(rune(sa[index+1])) {
-				builder.WriteString(strings.Repeat(string(symbol), int(rune(sa[index+1])-'0')))
+			if index < len(s)-1 && unicode.IsDigit(rune(sa[index+1])) {
+				builder.WriteString(strings.Repeat(str, int(rune(sa[index+1])-'0')))
 			} else {
-				builder.WriteString(string(symbol))
+				builder.WriteString(str)
 			}
 		}
 	}
+
 	fmt.Println(builder.String())
-	fmt.Println(s)
 }
