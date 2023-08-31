@@ -6,9 +6,11 @@ import (
 	"unicode"
 )
 
-var ErrInvalidString = errors.New("invalid string")
-var zeroRune = rune("0"[0])
-var nlRune = rune("\n"[0])
+var (
+	ErrInvalidString = errors.New("invalid string")
+	zeroRune         = rune("0"[0])
+	nlRune           = rune("\n"[0])
+)
 
 func getStringSymbol(symbol byte) (str string) {
 	if unicode.IsLetter(rune(symbol)) {
