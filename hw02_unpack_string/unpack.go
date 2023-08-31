@@ -28,7 +28,9 @@ func isErrorDigitSymbol(index int, sa []byte) bool {
 
 func isErrorString(symbol byte, index int, sa []byte) bool {
 	symbolRune := rune(symbol)
-	if (!unicode.IsDigit(symbolRune) && !unicode.IsLetter(symbolRune) && symbolRune != nlRune) || (unicode.IsDigit(rune(symbol)) && isErrorDigitSymbol(index, sa)) {
+	isErrorUnknownLetter := !unicode.IsDigit(symbolRune) && !unicode.IsLetter(symbolRune) && symbolRune != nlRune
+	isErrorManyDigits := unicode.IsDigit(rune(symbol)) && isErrorDigitSymbol(index, sa)
+	if isErrorUnknownLetter || isErrorManyDigits {
 		return true
 	}
 	return false
