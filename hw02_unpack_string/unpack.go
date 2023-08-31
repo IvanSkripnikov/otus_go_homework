@@ -7,6 +7,8 @@ import (
 )
 
 var ErrInvalidString = errors.New("invalid string")
+var zeroRune = rune("0"[0])
+var nlRune = rune("\n"[0])
 
 func getStringSymbol(symbol byte) (str string) {
 	if unicode.IsLetter(rune(symbol)) {
@@ -20,23 +22,29 @@ func getStringSymbol(symbol byte) (str string) {
 func isErrorDigitSymbol(index int, sa []byte) bool {
 	if index == 0 || unicode.IsDigit(rune(sa[index-1])) {
 		return false
-	} else {
+	}
+	return true
+}
+
+func isErrorString(symbol byte, index int, sa []byte) bool {
+	symbolRune := rune(symbol)
+	if (!unicode.IsDigit(symbolRune) && !unicode.IsLetter(symbolRune) && symbolRune != nlRune) || (unicode.IsDigit(rune(symbol)) && isErrorDigitSymbol(index, sa)) {
 		return true
 	}
+	return false
 }
 
 func Unpack(s string) (string, error) {
 	var symbolRune rune
 	var builder strings.Builder
-	zeroRune := rune("0"[0])
-	nlRune := rune("\n"[0])
 	lenString := len(s)
 
 	sa := []byte(s)
 
 	for index, symbol := range sa {
 		symbolRune = rune(symbol)
-		if !unicode.IsDigit(symbolRune) && !unicode.IsLetter(symbolRune) && symbolRune != nlRune {
+
+		if isErrorString(symbol, index, sa) {
 			return "", ErrInvalidString
 		}
 
@@ -44,11 +52,7 @@ func Unpack(s string) (string, error) {
 			continue
 		}
 
-		if unicode.IsDigit(rune(symbol)) && isErrorDigitSymbol(index, sa) {
-			return "", ErrInvalidString
-		}
-
-		if unicode.IsLetter(rune(symbol)) || rune(symbol) == nlRune {
+		if unicode.IsLetter(symbolRune) || symbolRune == nlRune {
 			str := getStringSymbol(symbol)
 			if index < lenString-1 && rune(sa[index+1]) == zeroRune {
 				continue
