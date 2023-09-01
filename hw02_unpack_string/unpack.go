@@ -23,7 +23,7 @@ func getStringSymbol(symbol rune) (str string) {
 }
 
 func isErrorDigitSymbol(index int, sa []rune) bool {
-	if index == 0 || unicode.IsDigit(rune(sa[index-1])) {
+	if index == 0 || unicode.IsDigit(sa[index-1]) {
 		return true
 	}
 	return false
