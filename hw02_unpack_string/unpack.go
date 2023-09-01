@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 var (
@@ -12,8 +13,8 @@ var (
 	nlRune           = rune("\n"[0])
 )
 
-func getStringSymbol(symbol byte) (str string) {
-	if unicode.IsLetter(rune(symbol)) {
+func getStringSymbol(symbol rune) (str string) {
+	if unicode.IsLetter(symbol) {
 		str = string(symbol)
 	} else {
 		str = `\n`
@@ -21,17 +22,16 @@ func getStringSymbol(symbol byte) (str string) {
 	return
 }
 
-func isErrorDigitSymbol(index int, sa []byte) bool {
+func isErrorDigitSymbol(index int, sa []rune) bool {
 	if index == 0 || unicode.IsDigit(rune(sa[index-1])) {
 		return true
 	}
 	return false
 }
 
-func isErrorString(symbol byte, index int, sa []byte) bool {
-	symbolRune := rune(symbol)
-	isErrorUnknownLetter := !unicode.IsDigit(symbolRune) && !unicode.IsLetter(symbolRune) && symbolRune != nlRune
-	isErrorManyDigits := unicode.IsDigit(symbolRune) && isErrorDigitSymbol(index, sa)
+func isErrorString(symbol rune, index int, sa []rune) bool {
+	isErrorUnknownLetter := !unicode.IsDigit(symbol) && !unicode.IsLetter(symbol) && symbol != nlRune
+	isErrorManyDigits := unicode.IsDigit(symbol) && isErrorDigitSymbol(index, sa)
 	if isErrorUnknownLetter || isErrorManyDigits {
 		return true
 	}
@@ -39,30 +39,27 @@ func isErrorString(symbol byte, index int, sa []byte) bool {
 }
 
 func Unpack(s string) (string, error) {
-	var symbolRune rune
 	var builder strings.Builder
-	lenString := len(s)
+	lenString := utf8.RuneCountInString(s)
 
-	sa := []byte(s)
+	sa := []rune(s)
 
 	for index, symbol := range sa {
-		symbolRune = rune(symbol)
-
 		if isErrorString(symbol, index, sa) {
 			return "", ErrInvalidString
 		}
 
-		if index == lenString-1 && symbolRune == zeroRune {
+		if index == lenString-1 && symbol == zeroRune {
 			continue
 		}
 
-		if unicode.IsLetter(symbolRune) || symbolRune == nlRune {
+		if unicode.IsLetter(symbol) || symbol == nlRune {
 			str := getStringSymbol(symbol)
-			if index < lenString-1 && rune(sa[index+1]) == zeroRune {
+			if index < lenString-1 && sa[index+1] == zeroRune {
 				continue
 			}
-			if index < lenString-1 && unicode.IsDigit(rune(sa[index+1])) {
-				builder.WriteString(strings.Repeat(str, int(rune(sa[index+1])-'0')))
+			if index < lenString-1 && unicode.IsDigit(sa[index+1]) {
+				builder.WriteString(strings.Repeat(str, int(sa[index+1]-'0')))
 			} else {
 				builder.WriteString(str)
 			}
