@@ -37,14 +37,24 @@ func isErrorDigitSymbol(index int, sa string) bool {
 	return false
 }
 
-func isErrorUnknownLetter(symbol rune) bool {
-	return !unicode.IsDigit(symbol) && !unicode.IsLetter(symbol) && !unicode.IsSpace(symbol)
+func isErrorUnknownChar(symbol rune) bool {
+	return !unicode.IsDigit(symbol) && !unicode.IsLetter(symbol) && isNotPossibleSpace(symbol)
+}
+
+func isNotPossibleSpace(symbol rune) bool {
+	if unicode.IsSpace(symbol) {
+		_, ok := spaceSymbols[symbol]
+		if ok == false {
+			return true
+		}
+	}
+	return false
 }
 
 func isErrorString(s string) bool {
 	for index, symbol := range s {
 		isErrorManyDigits := unicode.IsDigit(symbol) && isErrorDigitSymbol(index, s)
-		if isErrorUnknownLetter(symbol) || isErrorManyDigits {
+		if isErrorUnknownChar(symbol) || isErrorManyDigits {
 			return true
 		}
 	}
