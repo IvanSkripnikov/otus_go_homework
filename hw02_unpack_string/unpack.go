@@ -20,7 +20,7 @@ var (
 )
 
 func getStringSymbol(symbol rune) string {
-	str := ``
+	var str string
 	if unicode.IsLetter(symbol) {
 		str = string(symbol)
 	} else {
@@ -30,21 +30,23 @@ func getStringSymbol(symbol rune) string {
 	return str
 }
 
-func isErrorDigitSymbol(index int, sa string) bool {
-	if index == 0 || unicode.IsDigit(rune(sa[index-1])) {
-		return true
-	}
-	return false
-}
-
 func isErrorUnknownChar(symbol rune) bool {
 	return !unicode.IsDigit(symbol) && !unicode.IsLetter(symbol) && isNotPossibleSpace(symbol)
+}
+
+func isErrorManyDigits(symbol rune, index int, s string) bool {
+	if unicode.IsDigit(symbol) {
+		if index == 0 || unicode.IsDigit(rune(s[index-1])) {
+			return true
+		}
+	}
+	return false
 }
 
 func isNotPossibleSpace(symbol rune) bool {
 	if unicode.IsSpace(symbol) {
 		_, ok := spaceSymbols[symbol]
-		if ok == false {
+		if !ok {
 			return true
 		}
 	}
@@ -53,8 +55,7 @@ func isNotPossibleSpace(symbol rune) bool {
 
 func isErrorString(s string) bool {
 	for index, symbol := range s {
-		isErrorManyDigits := unicode.IsDigit(symbol) && isErrorDigitSymbol(index, s)
-		if isErrorUnknownChar(symbol) || isErrorManyDigits {
+		if isErrorUnknownChar(symbol) || isErrorManyDigits(symbol, index, s) {
 			return true
 		}
 	}
