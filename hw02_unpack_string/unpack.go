@@ -9,44 +9,26 @@ import (
 
 var (
 	ErrInvalidString = errors.New("invalid string")
-	zeroRune         = rune("0"[0])
-	spaceSymbols     = map[rune]string{
-		rune("\n"[0]): `\n`,
-		rune("\t"[0]): `\t`,
-		rune("\r"[0]): `\r`,
-		rune("\v"[0]): `\v`,
-		rune("\f"[0]): `\f`,
-	}
+	zeroRune         = rune(`0`[0])
+	slashRune        = rune(`\`[0])
 )
 
-func getStringSymbol(symbol rune) string {
-	var str string
-	if unicode.IsLetter(symbol) {
-		str = string(symbol)
-	} else {
-		str = spaceSymbols[symbol]
+func getStringSymbol(symbol rune, withSlash bool) string {
+	str := string(symbol)
+	if withSlash {
+		str = `\` + str
 	}
 
 	return str
 }
 
 func isErrorUnknownChar(symbol rune) bool {
-	return !unicode.IsDigit(symbol) && !unicode.IsLetter(symbol) && isNotPossibleSpace(symbol)
+	return !unicode.IsDigit(symbol) && !unicode.IsLetter(symbol) && symbol != slashRune
 }
 
 func isErrorManyDigits(symbol rune, index int, s string) bool {
 	if unicode.IsDigit(symbol) {
 		if index == 0 || unicode.IsDigit(rune(s[index-1])) {
-			return true
-		}
-	}
-	return false
-}
-
-func isNotPossibleSpace(symbol rune) bool {
-	if unicode.IsSpace(symbol) {
-		_, ok := spaceSymbols[symbol]
-		if !ok {
 			return true
 		}
 	}
@@ -71,13 +53,21 @@ func Unpack(s string) (string, error) {
 	}
 
 	sa := []rune(s)
+	var flagSlash bool
 	for index, symbol := range sa {
 		if index == lenString-1 && symbol == zeroRune {
 			continue
 		}
 
-		if unicode.IsLetter(symbol) || unicode.IsSpace(symbol) {
-			str := getStringSymbol(symbol)
+		if symbol == slashRune {
+			flagSlash = true
+			continue
+		}
+
+		if unicode.IsLetter(symbol) || unicode.IsControl(symbol) {
+			str := getStringSymbol(symbol, flagSlash)
+			flagSlash = false
+
 			if index < lenString-1 && sa[index+1] == zeroRune {
 				continue
 			}
