@@ -10,24 +10,25 @@ import (
 var (
 	ErrInvalidString = errors.New("invalid string")
 	zeroRune         = rune("0"[0])
+	backspaceRune    = rune(" "[0])
 )
 
-func isErrorUnknownChar(symbol rune) bool {
-	return !unicode.IsDigit(symbol) && !unicode.IsLetter(symbol) && !unicode.IsControl(symbol)
-}
-
-func isErrorManyDigits(symbol rune, index int, s string) bool {
-	if unicode.IsDigit(symbol) {
-		if index == 0 || unicode.IsDigit(rune(s[index-1])) {
-			return true
-		}
+func isErrorManyDigits(symbolPrev, symbolCurrent rune) bool {
+	if unicode.IsDigit(symbolCurrent) && unicode.IsDigit(symbolPrev) {
+		return true
 	}
 	return false
 }
 
 func isErrorString(s string) bool {
 	for index, symbol := range s {
-		if isErrorUnknownChar(symbol) || isErrorManyDigits(symbol, index, s) {
+		if index == 0 && unicode.IsDigit(symbol) {
+			return true
+		}
+		if symbol == backspaceRune {
+			return true
+		}
+		if index > 0 && isErrorManyDigits(rune(s[index-1]), symbol) {
 			return true
 		}
 	}
