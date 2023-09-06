@@ -37,24 +37,27 @@ func isErrorString(s string) bool {
 func Unpack(s string) (string, error) {
 	var builder strings.Builder
 	lenString := utf8.RuneCountInString(s)
+	if lenString == 0 {
+		return "", nil
+	}
 
 	if isErrorString(s) {
 		return "", ErrInvalidString
 	}
 
-	sa := []rune(s)
-	for index, symbol := range sa {
+	stringRunes := []rune(s)
+	for index, symbol := range stringRunes {
 		if index == lenString-1 && symbol == zeroRune {
 			continue
 		}
 
 		if unicode.IsLetter(symbol) || unicode.IsSpace(symbol) {
 			str := string(symbol)
-			if index < lenString-1 && sa[index+1] == zeroRune {
+			if index < lenString-1 && stringRunes[index+1] == zeroRune {
 				continue
 			}
-			if index < lenString-1 && unicode.IsDigit(sa[index+1]) {
-				builder.WriteString(strings.Repeat(str, int(sa[index+1]-'0')))
+			if index < lenString-1 && unicode.IsDigit(stringRunes[index+1]) {
+				builder.WriteString(strings.Repeat(str, int(stringRunes[index+1]-'0')))
 			} else {
 				builder.WriteString(str)
 			}
