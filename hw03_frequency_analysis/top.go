@@ -1,19 +1,41 @@
 package main
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 )
 
-func Top10(_ string) []string {
-	// Place your code here.
-	return nil
-}
-
 type Word struct {
 	Title string
 	Count int
+}
+
+func Top10(str string) []string {
+	return getTopWordsList(str, 10)
+}
+
+func getTopWordsList(str string, limit int) []string {
+	resultMap := getMappedWords(strings.Split(str, ` `))
+
+	resultStruct := []Word{}
+	for key, value := range resultMap {
+		w := Word{
+			Title: key,
+			Count: value,
+		}
+		resultStruct = append(resultStruct, w)
+	}
+
+	sort.Slice(resultStruct, func(i, j int) bool {
+		return resultStruct[i].Count > resultStruct[j].Count
+	})
+
+	top10Strings := make([]string, limit)
+	for i := 0; i < limit; i++ {
+		top10Strings[i] = resultStruct[i].Title
+	}
+
+	return top10Strings
 }
 
 func getMappedWords(strings []string) map[string]int {
@@ -31,6 +53,7 @@ func getMappedWords(strings []string) map[string]int {
 	return resultMap
 }
 
+/*
 func main() {
 	str := `cat and dog, one dog,two cats and one man and one child. Child play with dog and cats. Dogs and cats is a pets`
 	resultMap := getMappedWords(strings.Split(str, ` `))
@@ -48,5 +71,10 @@ func main() {
 		return resultStruct[i].Count > resultStruct[j].Count
 	})
 
-	fmt.Println(resultStruct[:10])
+	limit := 10
+	top10Strings := make([]string, 10)
+	for i := 0; i < limit; i++ {
+		top10Strings[i] = resultStruct[i].Title
+	}
 }
+*/
