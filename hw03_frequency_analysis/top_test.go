@@ -79,4 +79,36 @@ func TestTop10(t *testing.T) {
 			require.Equal(t, expected, Top10(text))
 		}
 	})
+
+	t.Run("negative test", func(t *testing.T) {
+		if taskWithAsteriskIsCompleted {
+			expected := []string{
+				"и",         // 6
+				"если",      // 4
+				"его",       // 4
+				"не",        // 4
+				"в",         // 4
+				"что",       // 5
+				"кристофер", // 4
+				"ты",        // 5
+				"а",         // 8
+				"он",        // 8
+			}
+			require.NotEqual(t, expected, Top10(text))
+		} else {
+			expected := []string{
+				"не",        // 4
+				"Кристофер", // 4
+				"то",        // 4
+				"если",      // 4
+				"а",         // 6
+				"и",         // 6
+				"что",       // 5
+				"-",         // 4
+				"ты",        // 5
+				"он",        // 8
+			}
+			require.NotEqual(t, expected, Top10(text))
+		}
+	})
 }
