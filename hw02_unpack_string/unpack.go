@@ -9,8 +9,8 @@ import (
 
 var (
 	ErrInvalidString = errors.New("invalid string")
-	zeroRune         = rune("0"[0])
-	backspaceRune    = rune(" "[0])
+	zeroRune         = '0'
+	backspaceRune    = ' '
 )
 
 func isErrorManyDigits(symbolPrev, symbolCurrent rune) bool {
