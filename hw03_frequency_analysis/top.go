@@ -19,7 +19,17 @@ func getTopWordsList(str string, limit int) []string {
 		return make([]string, 0)
 	}
 	resultMap := getMappedWords(strings.Fields(str))
+	resultStruct := getStructuredWords(resultMap)
 
+	top10Strings := make([]string, limit)
+	for i := 0; i < limit; i++ {
+		top10Strings[i] = resultStruct[i].Title
+	}
+
+	return top10Strings
+}
+
+func getStructuredWords(resultMap map[string]int) []Word {
 	var resultStruct []Word
 	for key, value := range resultMap {
 		w := Word{
@@ -34,12 +44,7 @@ func getTopWordsList(str string, limit int) []string {
 			(resultStruct[i].Count == resultStruct[j].Count && resultStruct[i].Title < resultStruct[j].Title)
 	})
 
-	top10Strings := make([]string, limit)
-	for i := 0; i < limit; i++ {
-		top10Strings[i] = resultStruct[i].Title
-	}
-
-	return top10Strings
+	return resultStruct
 }
 
 func getMappedWords(strings []string) map[string]int {
