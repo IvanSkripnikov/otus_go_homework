@@ -30,7 +30,7 @@ func getTopWordsList(str string, limit int) []string {
 }
 
 func getStructuredWords(resultMap map[string]int) []Word {
-	var resultStruct []Word
+	resultStruct := make([]Word, 0, len(resultMap))
 	for key, value := range resultMap {
 		w := Word{
 			Title: key,
