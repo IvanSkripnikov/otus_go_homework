@@ -1,4 +1,4 @@
-package hw03frequencyanalysis
+package main
 
 import (
 	"testing"
@@ -78,5 +78,51 @@ func TestTop10(t *testing.T) {
 			}
 			require.Equal(t, expected, Top10(text))
 		}
+	})
+
+	t.Run("negative test", func(t *testing.T) {
+		if taskWithAsteriskIsCompleted {
+			expected := []string{
+				"и",         // 6
+				"если",      // 4
+				"его",       // 4
+				"не",        // 4
+				"в",         // 4
+				"что",       // 5
+				"кристофер", // 4
+				"ты",        // 5
+				"а",         // 8
+				"он",        // 8
+			}
+			require.NotEqual(t, expected, Top10(text))
+		} else {
+			expected := []string{
+				"не",        // 4
+				"Кристофер", // 4
+				"то",        // 4
+				"если",      // 4
+				"а",         // 6
+				"и",         // 6
+				"что",       // 5
+				"-",         // 4
+				"ты",        // 5
+				"он",        // 8
+			}
+			require.NotEqual(t, expected, Top10(text))
+		}
+	})
+
+	t.Run("less than 10 words test", func(t *testing.T) {
+		smallText := `Надо любить жизнь больше, чем смысл жизни.`
+		expected := []string{
+			"Надо",    // 1
+			"больше,", // 1
+			"жизни.",  // 1
+			"жизнь",   // 1
+			"любить",  // 1
+			"смысл",   // 1
+			"чем",     // 1
+		}
+		require.Equal(t, expected, Top10(smallText))
 	})
 }
