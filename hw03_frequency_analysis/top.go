@@ -21,6 +21,9 @@ func getTopWordsList(str string, limit int) []string {
 	resultMap := getMappedWords(strings.Fields(str))
 	resultStruct := getStructuredWords(resultMap)
 
+	if len(resultStruct) < limit {
+		limit = len(resultStruct)
+	}
 	top10Strings := make([]string, limit)
 	for i := 0; i < limit; i++ {
 		top10Strings[i] = resultStruct[i].Title
