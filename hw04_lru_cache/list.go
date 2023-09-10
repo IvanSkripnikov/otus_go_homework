@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 type List interface {
 	Len() int
 	Front() *ListItem
@@ -36,9 +34,10 @@ func (list list) Back() *ListItem {
 	return list.LastElement
 }
 
-func (list list) PushFront(v interface{}) *ListItem {
+func (list *list) PushFront(v interface{}) *ListItem {
 	val := ListItem{Value: v}
 	if list.Count == 0 {
+		list.FirstElement = &val
 		list.LastElement = &val
 	} else {
 		firstElement := list.FirstElement
@@ -51,10 +50,11 @@ func (list list) PushFront(v interface{}) *ListItem {
 	return &val
 }
 
-func (list list) PushBack(v interface{}) *ListItem {
+func (list *list) PushBack(v interface{}) *ListItem {
 	val := ListItem{Value: v}
 	if list.Count == 0 {
 		list.FirstElement = &val
+		list.LastElement = &val
 	} else {
 		lastElement := list.LastElement
 		lastElement.Next = &val
@@ -66,7 +66,7 @@ func (list list) PushBack(v interface{}) *ListItem {
 	return &val
 }
 
-func (list list) Remove(i *ListItem) {
+func (list *list) Remove(i *ListItem) {
 	currentElement := list.FirstElement
 	for index := 0; index < list.Count; index++ {
 		if i == currentElement {
@@ -81,7 +81,8 @@ func (list list) Remove(i *ListItem) {
 			} else {
 				nextElement := currentElement.Next
 				prevElement := currentElement.Prev
-				nextElement.Prev = prevElement
+				i.Next.Prev = prevElement
+				i.Prev.Next = nextElement
 			}
 			list.Count--
 			break
@@ -91,37 +92,41 @@ func (list list) Remove(i *ListItem) {
 	}
 }
 
-func (list list) MoveToFront(i *ListItem) {
+func (list *list) MoveToFront(i *ListItem) {
 	currentElement := list.FirstElement
 	for index := 0; index < list.Count; index++ {
 		if i == currentElement {
 			if index == 0 {
-
+				break
 			} else if index == list.Count-1 {
-				prevElement := currentElement.Prev
+				prevElement := i.Prev
 				prevElement.Next = nil
 				list.LastElement = prevElement
+
+				firstElement := list.FirstElement
+				firstElement.Prev = i
+				i.Prev = nil
+				i.Next = firstElement
+				list.FirstElement = i
 			} else {
-				nextElement := currentElement.Next
-				prevElement := currentElement.Prev
-				nextElement.Prev = prevElement
+				nextElement := i.Next
+				prevElement := i.Prev
+				i.Prev = prevElement
+				i.Next = nextElement
+
+				firstElement := list.FirstElement
+				firstElement.Prev = i
+				i.Prev = nil
+				i.Next = firstElement
+				list.FirstElement = i
 			}
 			break
 		} else {
 			currentElement = currentElement.Next
 		}
 	}
-
-	firstElement := list.FirstElement
-	i.Prev = nil
-	i.Next = firstElement
-	list.FirstElement = i
 }
 
 func NewList() List {
 	return new(list)
-}
-
-func main() {
-	fmt.Println("working")
 }
