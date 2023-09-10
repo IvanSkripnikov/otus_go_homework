@@ -19,7 +19,6 @@ type ListItem struct {
 }
 
 type list struct {
-	List
 	Count        int
 	FirstElement *ListItem
 	LastElement  *ListItem
@@ -39,22 +38,30 @@ func (list list) Back() *ListItem {
 
 func (list list) PushFront(v interface{}) *ListItem {
 	val := ListItem{Value: v}
-	list.FirstElement = &val
-	list.Count++
 	if list.Count == 0 {
 		list.LastElement = &val
+	} else {
+		firstElement := list.FirstElement
+		firstElement.Prev = &val
+		val.Next = firstElement
+		list.FirstElement = &val
 	}
+	list.Count++
 
 	return &val
 }
 
 func (list list) PushBack(v interface{}) *ListItem {
 	val := ListItem{Value: v}
-	list.LastElement = &val
-	list.Count++
 	if list.Count == 0 {
 		list.FirstElement = &val
+	} else {
+		lastElement := list.LastElement
+		lastElement.Next = &val
+		val.Prev = lastElement
+		list.LastElement = &val
 	}
+	list.Count++
 
 	return &val
 }

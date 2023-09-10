@@ -1,4 +1,4 @@
-package hw04lrucache
+package main
 
 import (
 	"math/rand"

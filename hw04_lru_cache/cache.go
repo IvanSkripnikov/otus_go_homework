@@ -1,4 +1,6 @@
-package hw04lrucache
+package main
+
+import "fmt"
 
 type Key string
 
@@ -9,8 +11,6 @@ type Cache interface {
 }
 
 type lruCache struct {
-	Cache // Remove me after realization.
-
 	capacity int
 	queue    List
 	items    map[Key]*ListItem
@@ -22,4 +22,41 @@ func NewCache(capacity int) Cache {
 		queue:    NewList(),
 		items:    make(map[Key]*ListItem, capacity),
 	}
+}
+
+func (elem *lruCache) Set(key Key, value interface{}) bool {
+	if item, ok := elem.items[key]; !ok {
+		elem.items[key] = elem.queue.PushFront(value)
+
+		if elem.queue.Len() > elem.capacity {
+			lastItem := elem.queue.Back()
+			delete(elem.items, key)
+			elem.queue.Remove(lastItem)
+
+		}
+	} else {
+		elem.queue.MoveToFront(item)
+
+		return true
+	}
+
+	return false
+}
+
+func (elem *lruCache) Get(key Key) (interface{}, bool) {
+	if item, ok := elem.items[key]; ok {
+		elem.queue.MoveToFront(item)
+		return item.Value, ok
+	}
+
+	return nil, false
+}
+
+func (elem *lruCache) Clear() {
+	elem.queue = NewList()
+	elem.items = make(map[Key]*ListItem, elem.capacity)
+}
+
+func main() {
+	fmt.Println("working")
 }
