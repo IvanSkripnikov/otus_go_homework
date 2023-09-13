@@ -14,6 +14,11 @@ type lruCache struct {
 	items    map[Key]*ListItem
 }
 
+type Vault struct {
+	Key   Key
+	Value interface{}
+}
+
 func NewCache(capacity int) Cache {
 	return &lruCache{
 		capacity: capacity,
@@ -23,32 +28,39 @@ func NewCache(capacity int) Cache {
 }
 
 func (elem *lruCache) Set(key Key, value interface{}) bool {
-	if item, ok := elem.items[key]; !ok {
-		elem.items[key] = elem.queue.PushFront(value)
+	item, ok := elem.items[key]
+
+	if ok {
+		if vaultItem, vaultOk := item.Value.(*Vault); vaultOk {
+			vaultItem.Value = value
+			elem.queue.MoveToFront(item)
+
+			return true
+		}
+	} else {
+		elem.items[key] = elem.queue.PushFront(&Vault{Key: key, Value: value})
 
 		if elem.queue.Len() > elem.capacity {
 			lastItem := elem.queue.Back()
-			val := lastItem.Value
-			for k, v := range elem.items {
-				if v.Value == val {
-					delete(elem.items, k)
-					elem.queue.Remove(lastItem)
-				}
+			if vaultItem, vaultOk := lastItem.Value.(*Vault); vaultOk {
+				delete(elem.items, vaultItem.Key)
+				elem.queue.Remove(lastItem)
 			}
 		}
-	} else {
-		item.Value = value
-		elem.queue.MoveToFront(item)
-		return true
 	}
 
 	return false
 }
 
 func (elem *lruCache) Get(key Key) (interface{}, bool) {
-	if item, ok := elem.items[key]; ok {
-		elem.queue.MoveToFront(item)
-		return item.Value, ok
+	item, ok := elem.items[key]
+	if !ok {
+		return nil, false
+	}
+
+	elem.queue.MoveToFront(item)
+	if vaultItem, vaultOk := item.Value.(*Vault); vaultOk {
+		return vaultItem.Value, ok
 	}
 
 	return nil, false
