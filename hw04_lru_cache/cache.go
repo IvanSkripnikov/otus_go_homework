@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 type Key string
 
 type Cache interface {
@@ -35,8 +33,8 @@ func (elem *lruCache) Set(key Key, value interface{}) bool {
 
 		}
 	} else {
+		item.Value = value
 		elem.queue.MoveToFront(item)
-
 		return true
 	}
 
@@ -55,8 +53,4 @@ func (elem *lruCache) Get(key Key) (interface{}, bool) {
 func (elem *lruCache) Clear() {
 	elem.queue = NewList()
 	elem.items = make(map[Key]*ListItem, elem.capacity)
-}
-
-func main() {
-	fmt.Println("working")
 }
