@@ -28,8 +28,13 @@ func (elem *lruCache) Set(key Key, value interface{}) bool {
 
 		if elem.queue.Len() > elem.capacity {
 			lastItem := elem.queue.Back()
-			delete(elem.items, key)
-			elem.queue.Remove(lastItem)
+			val := lastItem.Value
+			for k, v := range elem.items {
+				if v.Value == val {
+					delete(elem.items, k)
+					elem.queue.Remove(lastItem)
+				}
+			}
 		}
 	} else {
 		item.Value = value
