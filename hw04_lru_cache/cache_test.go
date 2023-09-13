@@ -75,7 +75,7 @@ func TestCache(t *testing.T) {
 		wasInCache = c.Set("eee", 5)
 		require.False(t, wasInCache)
 
-		val, ok = c.Get("aaa")
+		val, ok = c.Get("ccc")
 		require.False(t, ok)
 		require.Nil(t, val)
 	})

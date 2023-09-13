@@ -38,7 +38,8 @@ func (elem *lruCache) Set(key Key, value interface{}) bool {
 			return true
 		}
 	} else {
-		elem.items[key] = elem.queue.PushFront(&Vault{Key: key, Value: value})
+		vault := Vault{Key: key, Value: value}
+		elem.items[key] = elem.queue.PushFront(&vault)
 
 		if elem.queue.Len() > elem.capacity {
 			lastItem := elem.queue.Back()
@@ -57,7 +58,6 @@ func (elem *lruCache) Get(key Key) (interface{}, bool) {
 	if !ok {
 		return nil, false
 	}
-
 	elem.queue.MoveToFront(item)
 	if vaultItem, vaultOk := item.Value.(*Vault); vaultOk {
 		return vaultItem.Value, ok

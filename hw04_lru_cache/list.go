@@ -37,12 +37,15 @@ func (list list) Back() *ListItem {
 func (list *list) PushFront(v interface{}) *ListItem {
 	val := ListItem{Value: v}
 	if list.Count == 0 {
+		val.Prev = nil
+		val.Next = nil
 		list.FirstElement = &val
 		list.LastElement = &val
 	} else {
 		firstElement := list.FirstElement
-		firstElement.Prev = &val
+		val.Prev = nil
 		val.Next = firstElement
+		firstElement.Prev = &val
 		list.FirstElement = &val
 	}
 	list.Count++
@@ -53,12 +56,15 @@ func (list *list) PushFront(v interface{}) *ListItem {
 func (list *list) PushBack(v interface{}) *ListItem {
 	val := ListItem{Value: v}
 	if list.Count == 0 {
+		val.Prev = nil
+		val.Next = nil
 		list.FirstElement = &val
 		list.LastElement = &val
 	} else {
 		lastElement := list.LastElement
-		lastElement.Next = &val
 		val.Prev = lastElement
+		val.Next = nil
+		lastElement.Next = &val
 		list.LastElement = &val
 	}
 	list.Count++
@@ -67,66 +73,68 @@ func (list *list) PushBack(v interface{}) *ListItem {
 }
 
 func (list *list) Remove(i *ListItem) {
-	currentElement := list.FirstElement
-	for index := 0; index < list.Count; index++ {
-		if i == currentElement {
-			if index == 0 {
-				nextElement := currentElement.Next
+	if list.isEmpty() == false {
+		if list.Count == 1 {
+			list.FirstElement = nil
+			list.LastElement = nil
+		} else {
+			if i.Prev == nil {
+				nextElement := i.Next
 				nextElement.Prev = nil
 				list.FirstElement = nextElement
-			} else if index == list.Count-1 {
-				prevElement := currentElement.Prev
+			} else if i.Next == nil {
+				prevElement := i.Prev
 				prevElement.Next = nil
 				list.LastElement = prevElement
 			} else {
-				nextElement := currentElement.Next
-				prevElement := currentElement.Prev
+				nextElement := i.Next
+				prevElement := i.Prev
 				i.Next.Prev = prevElement
 				i.Prev.Next = nextElement
 			}
-			list.Count--
-			break
-		} else {
-			currentElement = currentElement.Next
 		}
+		list.Count--
 	}
 }
 
 func (list *list) MoveToFront(i *ListItem) {
-	currentElement := list.FirstElement
-	for index := 0; index < list.Count; index++ {
-		if i == currentElement {
-			if index == 0 {
-				break
-			} else if index == list.Count-1 {
-				prevElement := i.Prev
-				prevElement.Next = nil
-				list.LastElement = prevElement
+	// проверка на непустой список
+	if list.isEmpty() == true {
+		return
+	}
+	// проверка на то, что это первый жлемент
+	if i.Prev == nil {
+		return
+	}
 
-				firstElement := list.FirstElement
-				firstElement.Prev = i
-				i.Prev = nil
-				i.Next = firstElement
-				list.FirstElement = i
-			} else {
-				nextElement := i.Next
-				prevElement := i.Prev
-				i.Prev = prevElement
-				i.Next = nextElement
+	if i.Next == nil {
+		prevElement := i.Prev
+		prevElement.Next = nil
+		list.LastElement = prevElement
 
-				firstElement := list.FirstElement
-				firstElement.Prev = i
-				i.Prev = nil
-				i.Next = firstElement
-				list.FirstElement = i
-			}
-			break
-		} else {
-			currentElement = currentElement.Next
-		}
+		firstElement := list.FirstElement
+		firstElement.Prev = i
+		i.Prev = nil
+		i.Next = firstElement
+		list.FirstElement = i
+	} else {
+		nextElement := i.Next
+		prevElement := i.Prev
+		i.Next.Prev = prevElement
+		i.Prev.Next = nextElement
+
+		firstElement := list.FirstElement
+		i.Prev = nil
+		i.Next = firstElement
+		firstElement.Prev = i
+		list.FirstElement = i
 	}
 }
 
 func NewList() List {
 	return new(list)
+}
+
+func (list list) isEmpty() bool {
+	return list.Count == 0
 }
