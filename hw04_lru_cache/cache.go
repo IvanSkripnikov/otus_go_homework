@@ -30,7 +30,6 @@ func (elem *lruCache) Set(key Key, value interface{}) bool {
 			lastItem := elem.queue.Back()
 			delete(elem.items, key)
 			elem.queue.Remove(lastItem)
-
 		}
 	} else {
 		item.Value = value
