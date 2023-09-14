@@ -73,25 +73,38 @@ func (list *list) PushBack(v interface{}) *ListItem {
 }
 
 func (list *list) Remove(i *ListItem) {
+	// обрабатываем случай пустого списка
 	if list.Count == 0 {
 		return
 	}
+
+	// обрабатываем случай одного элемента в списке
 	if list.Count == 1 {
 		list.FirstElement = nil
 		list.LastElement = nil
-	} else {
-		if i.Prev == nil {
-			nextElement := i.Next
-			nextElement.Prev = nil
-			list.FirstElement = nextElement
-		} else if i.Next == nil {
-			prevElement := i.Prev
-			prevElement.Next = nil
-			list.LastElement = prevElement
-		} else {
-			list.LinkNeighboringForElement(i)
-		}
+		list.Count--
+		return
 	}
+
+	// обрабатываем случай удаления первого элемента
+	if i.Prev == nil {
+		nextElement := i.Next
+		nextElement.Prev = nil
+		list.FirstElement = nextElement
+		list.Count--
+		return
+	}
+
+	// обрабатываем случай удаления последнего элемента
+	if i.Next == nil {
+		prevElement := i.Prev
+		prevElement.Next = nil
+		list.LastElement = prevElement
+		list.Count--
+		return
+	}
+
+	list.LinkNeighboringForElement(i)
 	list.Count--
 }
 
@@ -100,11 +113,13 @@ func (list *list) MoveToFront(i *ListItem) {
 	if list.Count == 0 {
 		return
 	}
-	// проверка на то, что это первый элемент
+
+	// обрабатываем случай первого элемента
 	if i.Prev == nil {
 		return
 	}
 
+	// обрабатываем случай последнего элемента
 	if i.Next == nil {
 		prevElement := i.Prev
 		prevElement.Next = nil
