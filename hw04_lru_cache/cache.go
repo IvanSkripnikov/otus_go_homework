@@ -40,14 +40,7 @@ func (elem *lruCache) Set(key Key, value interface{}) bool {
 	} else {
 		vault := Vault{Key: key, Value: value}
 		elem.items[key] = elem.queue.PushFront(&vault)
-
-		if elem.queue.Len() > elem.capacity {
-			lastItem := elem.queue.Back()
-			if vaultItem, vaultOk := lastItem.Value.(*Vault); vaultOk {
-				delete(elem.items, vaultItem.Key)
-				elem.queue.Remove(lastItem)
-			}
-		}
+		elem.RemoveOverflowElements()
 	}
 
 	return false
@@ -69,4 +62,15 @@ func (elem *lruCache) Get(key Key) (interface{}, bool) {
 func (elem *lruCache) Clear() {
 	elem.queue = NewList()
 	elem.items = make(map[Key]*ListItem, elem.capacity)
+}
+
+func (elem *lruCache) RemoveOverflowElements() {
+	if elem.queue.Len() <= elem.capacity {
+		return
+	}
+	lastItem := elem.queue.Back()
+	if vaultItem, vaultOk := lastItem.Value.(*Vault); vaultOk {
+		delete(elem.items, vaultItem.Key)
+		elem.queue.Remove(lastItem)
+	}
 }

@@ -89,10 +89,7 @@ func (list *list) Remove(i *ListItem) {
 			prevElement.Next = nil
 			list.LastElement = prevElement
 		} else {
-			nextElement := i.Next
-			prevElement := i.Prev
-			i.Next.Prev = prevElement
-			i.Prev.Next = nextElement
+			list.LinkNeighboringForElement(i)
 		}
 	}
 	list.Count--
@@ -113,14 +110,10 @@ func (list *list) MoveToFront(i *ListItem) {
 		prevElement.Next = nil
 		list.LastElement = prevElement
 
-		list.setCurrentElementFirst(i)
+		list.SetCurrentElementFirst(i)
 	} else {
-		nextElement := i.Next
-		prevElement := i.Prev
-		i.Next.Prev = prevElement
-		i.Prev.Next = nextElement
-
-		list.setCurrentElementFirst(i)
+		list.LinkNeighboringForElement(i)
+		list.SetCurrentElementFirst(i)
 	}
 }
 
@@ -128,10 +121,17 @@ func NewList() List {
 	return new(list)
 }
 
-func (list *list) setCurrentElementFirst(i *ListItem) {
+func (list *list) SetCurrentElementFirst(i *ListItem) {
 	firstElement := list.FirstElement
 	i.Prev = nil
 	i.Next = firstElement
 	firstElement.Prev = i
 	list.FirstElement = i
+}
+
+func (list *list) LinkNeighboringForElement(i *ListItem) {
+	nextElement := i.Next
+	prevElement := i.Prev
+	i.Next.Prev = prevElement
+	i.Prev.Next = nextElement
 }
