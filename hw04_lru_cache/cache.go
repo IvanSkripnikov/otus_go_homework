@@ -27,31 +27,33 @@ func NewCache(capacity int) Cache {
 	}
 }
 
-func (elem *lruCache) Set(key Key, value interface{}) bool {
-	item, ok := elem.items[key]
+func (lruCache *lruCache) Set(key Key, value interface{}) bool {
+	item, ok := lruCache.items[key]
 
 	if ok {
 		if vaultItem, vaultOk := item.Value.(*Vault); vaultOk {
 			vaultItem.Value = value
-			elem.queue.MoveToFront(item)
+			lruCache.queue.MoveToFront(item)
 
 			return true
 		}
 	} else {
 		vault := Vault{Key: key, Value: value}
-		elem.items[key] = elem.queue.PushFront(&vault)
-		elem.RemoveOverflowElements()
+		lruCache.items[key] = lruCache.queue.PushFront(&vault)
+		if lruCache.queue.Len() > lruCache.capacity {
+			RemoveOverflowElements(lruCache)
+		}
 	}
 
 	return false
 }
 
-func (elem *lruCache) Get(key Key) (interface{}, bool) {
-	item, ok := elem.items[key]
+func (lruCache *lruCache) Get(key Key) (interface{}, bool) {
+	item, ok := lruCache.items[key]
 	if !ok {
 		return nil, false
 	}
-	elem.queue.MoveToFront(item)
+	lruCache.queue.MoveToFront(item)
 	if vaultItem, vaultOk := item.Value.(*Vault); vaultOk {
 		return vaultItem.Value, ok
 	}
@@ -59,18 +61,15 @@ func (elem *lruCache) Get(key Key) (interface{}, bool) {
 	return nil, false
 }
 
-func (elem *lruCache) Clear() {
-	elem.queue = NewList()
-	elem.items = make(map[Key]*ListItem, elem.capacity)
+func (lruCache *lruCache) Clear() {
+	lruCache.queue = NewList()
+	lruCache.items = make(map[Key]*ListItem, lruCache.capacity)
 }
 
-func (elem *lruCache) RemoveOverflowElements() {
-	if elem.queue.Len() <= elem.capacity {
-		return
-	}
-	lastItem := elem.queue.Back()
+func RemoveOverflowElements(lruCache *lruCache) {
+	lastItem := lruCache.queue.Back()
 	if vaultItem, vaultOk := lastItem.Value.(*Vault); vaultOk {
-		delete(elem.items, vaultItem.Key)
-		elem.queue.Remove(lastItem)
+		delete(lruCache.items, vaultItem.Key)
+		lruCache.queue.Remove(lastItem)
 	}
 }
