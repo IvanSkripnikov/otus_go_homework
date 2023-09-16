@@ -19,27 +19,44 @@ func Run(tasks []Task, n, m int) error {
 	allHandledCount := 0
 	maxPossibleCount := n + m
 
+	tasksCh := make(chan Task, n)
+	errorsCh := make(chan error, len(tasks))
+
 	for i := 0; i < n; i++ {
-		go func(tasks []Task) {
+		go func() {
 			wg := sync.WaitGroup{}
 			wg.Add(n)
-			for _, task := range tasks {
-				allHandledCount++
-				if task() != nil {
-					errorCount++
-				}
-				wg.Done()
+
+			task := <-tasksCh
+			if task != nil {
+				errorsCh <- task()
 			}
+
 			wg.Wait()
-		}(tasks)
+		}()
 	}
-	fmt.Println(&allHandledCount)
-	fmt.Println(&errorCount)
+
+	go func(tasks []Task) {
+		for _, task := range tasks {
+			tasksCh <- task
+		}
+	}(tasks)
+
 	time.Sleep(1 * time.Second)
 
-	if allHandledCount > maxPossibleCount || errorCount > m {
-		return ErrErrorsLimitExceeded
+	for err := range errorsCh {
+		allHandledCount++
+
+		if err != nil {
+			errorCount++
+		}
+
+		if allHandledCount > maxPossibleCount || errorCount > m {
+			return ErrErrorsLimitExceeded
+		}
 	}
+
+	close(errorsCh)
 
 	return nil
 }
