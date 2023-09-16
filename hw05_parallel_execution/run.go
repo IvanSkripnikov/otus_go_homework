@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -15,19 +16,32 @@ type Task func() error
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
 	errorCount := 0
+	allHandledCount := 0
+	maxPossibleCount := n + m
 
 	for i := 0; i < n; i++ {
-		go taskHandler(tasks, &errorCount)
+		go func(tasks []Task) {
+			wg := sync.WaitGroup{}
+			wg.Add(n)
+			for _, task := range tasks {
+				allHandledCount++
+				if task() != nil {
+					errorCount++
+				}
+				wg.Done()
+			}
+			wg.Wait()
+		}(tasks)
 	}
-	fmt.Println(errorCount)
-	time.Sleep(2 * time.Second)
+	fmt.Println(&allHandledCount)
+	fmt.Println(&errorCount)
+	time.Sleep(1 * time.Second)
+
+	if allHandledCount > maxPossibleCount || errorCount > m {
+		return ErrErrorsLimitExceeded
+	}
 
 	return nil
-}
-
-func taskHandler(tasks []Task, errorCount *int) {
-	fmt.Println(tasks)
-	*errorCount++
 }
 
 func main() {
