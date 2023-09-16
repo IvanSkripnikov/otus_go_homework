@@ -18,29 +18,14 @@ func Run(tasks []Task, n, m int) error {
 	errorCount := 0
 	allHandledCount := 0
 	maxPossibleCount := n + m
-
 	tasksCh := make(chan Task, n)
 	errorsCh := make(chan error, len(tasks))
 
 	for i := 0; i < n; i++ {
-		go func() {
-			wg := sync.WaitGroup{}
-			wg.Add(n)
-
-			task := <-tasksCh
-			if task != nil {
-				errorsCh <- task()
-			}
-
-			wg.Wait()
-		}()
+		go taskHandler(n, tasksCh, errorsCh)
 	}
 
-	go func(tasks []Task) {
-		for _, task := range tasks {
-			tasksCh <- task
-		}
-	}(tasks)
+	go taskManager(tasks, tasksCh)
 
 	time.Sleep(1 * time.Second)
 
@@ -59,6 +44,24 @@ func Run(tasks []Task, n, m int) error {
 	close(errorsCh)
 
 	return nil
+}
+
+func taskHandler(n int, tasksCh chan Task, errorsCh chan error) {
+	wg := sync.WaitGroup{}
+	wg.Add(n)
+
+	task := <-tasksCh
+	if task != nil {
+		errorsCh <- task()
+	}
+
+	wg.Wait()
+}
+
+func taskManager(tasks []Task, tasksCh chan Task) {
+	for _, task := range tasks {
+		tasksCh <- task
+	}
 }
 
 func main() {
