@@ -34,6 +34,7 @@ func Run(tasks []Task, n, m int) error {
 		isErrErrorsLimitExceed := isErrErrorsLimitExceed(m, errorTaskCount)
 		completeHandledCount := completeHandledCount(allHandledCount, tasksCount)
 
+		// пока не выполнилось корнер условие пропускаем итерацию
 		if !isErrErrorsLimitExceed && !completeHandledCount {
 			continue
 		}
@@ -49,7 +50,9 @@ func Run(tasks []Task, n, m int) error {
 		}
 	}
 
-	close(errorTaskCh)
+	defer func() {
+		close(errorTaskCh)
+	}()
 
 	return nil
 }
