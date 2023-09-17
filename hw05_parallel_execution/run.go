@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -15,52 +14,66 @@ type Task func() error
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
-	errorCount := 0
+	errorTaskCount := 0
 	allHandledCount := 0
 	maxPossibleCount := n + m
+
+	completeFlagCh := make(chan struct{})
 	tasksCh := make(chan Task, n)
-	errorsCh := make(chan error, len(tasks))
+	errorTaskCh := make(chan error, len(tasks))
 
 	for i := 0; i < n; i++ {
-		go taskHandler(n, tasksCh, errorsCh)
+		go taskHandler(tasksCh, errorTaskCh, completeFlagCh)
 	}
 
-	go taskManager(tasks, tasksCh)
+	go taskManager(tasks, tasksCh, completeFlagCh)
 
 	time.Sleep(1 * time.Second)
 
-	for err := range errorsCh {
+	for err := range errorTaskCh {
 		allHandledCount++
 
 		if err != nil {
-			errorCount++
+			errorTaskCount++
 		}
 
-		if allHandledCount > maxPossibleCount || errorCount > m {
+		if allHandledCount > maxPossibleCount || errorTaskCount > m {
 			return ErrErrorsLimitExceeded
+		}
+
+		if allHandledCount >= len(tasks) {
+			close(completeFlagCh)
+			break
 		}
 	}
 
-	close(errorsCh)
+	close(errorTaskCh)
 
 	return nil
 }
 
-func taskHandler(n int, tasksCh chan Task, errorsCh chan error) {
-	wg := sync.WaitGroup{}
-	wg.Add(n)
-
-	task := <-tasksCh
-	if task != nil {
-		errorsCh <- task()
+func taskHandler(tasksCh chan Task, errorsCh chan error, completeFlagCh chan struct{}) {
+	for {
+		select {
+		case task := <-tasksCh:
+			if task != nil {
+				errorsCh <- task()
+			}
+		case <-completeFlagCh:
+			return
+		}
 	}
-
-	wg.Wait()
 }
 
-func taskManager(tasks []Task, tasksCh chan Task) {
+func taskManager(tasks []Task, tasksCh chan Task, completeFlagCh chan struct{}) {
+	defer close(tasksCh)
+
 	for _, task := range tasks {
-		tasksCh <- task
+		select {
+		case tasksCh <- task:
+		case <-completeFlagCh:
+			return
+		}
 	}
 }
 
