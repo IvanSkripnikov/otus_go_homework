@@ -31,15 +31,20 @@ func Run(tasks []Task, n, m int) error {
 			errorTaskCount++
 		}
 
-		// Проверяем на лимит по ошибкам
-		if m <= 0 && errorTaskCount > 0 || m > 0 && errorTaskCount >= m {
-			close(completeFlagCh)
+		isErrErrorsLimitExceed := isErrErrorsLimitExceed(m, errorTaskCount)
+		completeHandledCount := completeHandledCount(allHandledCount, tasksCount)
+
+		if !isErrErrorsLimitExceed && !completeHandledCount {
+			continue
+		}
+
+		close(completeFlagCh)
+
+		if isErrErrorsLimitExceed {
 			return ErrErrorsLimitExceeded
 		}
 
-		// Защищаемся от вечного цикла
-		if allHandledCount >= tasksCount {
-			close(completeFlagCh)
+		if completeHandledCount {
 			break
 		}
 	}
@@ -72,4 +77,20 @@ func taskManager(tasks []Task, tasksCh chan Task, completeFlagCh chan struct{}) 
 			return
 		}
 	}
+}
+
+func isErrErrorsLimitExceed(m, errorTaskCount int) bool {
+	if m <= 0 && errorTaskCount > 0 || m > 0 && errorTaskCount >= m {
+		return true
+	}
+
+	return false
+}
+
+func completeHandledCount(allHandledCount, tasksCount int) bool {
+	if allHandledCount >= tasksCount {
+		return true
+	}
+
+	return false
 }
