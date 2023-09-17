@@ -88,9 +88,5 @@ func isErrErrorsLimitExceed(m, errorTaskCount int) bool {
 }
 
 func completeHandledCount(allHandledCount, tasksCount int) bool {
-	if allHandledCount >= tasksCount {
-		return true
-	}
-
-	return false
+	return allHandledCount >= tasksCount
 }
