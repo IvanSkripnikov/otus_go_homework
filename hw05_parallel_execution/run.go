@@ -18,14 +18,13 @@ func Run(tasks []Task, n, m int) error {
 	numCPU := runtime.NumCPU()
 	tasksCh := make(chan Task, n)
 
+	go taskManager(tasks, tasksCh)
+
 	// ставим размер в 2 раза больший, чем количество системных обработчиков (чтоб уж наверняка)
 	errorTaskCh := make(chan error, numCPU*2)
-
 	for i := 0; i < n; i++ {
 		go taskHandler(tasksCh, errorTaskCh)
 	}
-
-	go taskManager(tasks, tasksCh)
 
 	for err := range errorTaskCh {
 		allHandledCount++
