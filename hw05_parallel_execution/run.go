@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"runtime"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
@@ -13,10 +14,13 @@ func Run(tasks []Task, n, m int) error {
 	tasksCount := len(tasks)
 	errorTaskCount := 0
 	allHandledCount := 0
+	numCPU := runtime.NumCPU()
 
 	completeFlagCh := make(chan struct{})
 	tasksCh := make(chan Task, n)
-	errorTaskCh := make(chan error, tasksCount)
+
+	// ставим размер в 2 раза больший, чем количество системных обработчиков (чтоб уж наверняка)
+	errorTaskCh := make(chan error, numCPU*2)
 
 	for i := 0; i < n; i++ {
 		go taskHandler(tasksCh, errorTaskCh, completeFlagCh)
@@ -57,12 +61,12 @@ func Run(tasks []Task, n, m int) error {
 	return nil
 }
 
-func taskHandler(tasksCh chan Task, errorsCh chan error, completeFlagCh chan struct{}) {
+func taskHandler(tasksCh chan Task, errorTaskCh chan error, completeFlagCh chan struct{}) {
 	for {
 		select {
 		case task := <-tasksCh:
 			if task != nil {
-				errorsCh <- task()
+				errorTaskCh <- task()
 			}
 		case <-completeFlagCh:
 			return
