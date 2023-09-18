@@ -74,7 +74,11 @@ func taskManager(tasks []Task, tasksCh chan Task) {
 }
 
 func isErrErrorsLimitExceed(m, errorTaskCount int, lessOrZeroM bool) bool {
-	return lessOrZeroM || errorTaskCount >= m
+	if lessOrZeroM || errorTaskCount >= m {
+		return true
+	}
+
+	return false
 }
 
 func completeHandledCount(allHandledCount, tasksCount int) bool {
