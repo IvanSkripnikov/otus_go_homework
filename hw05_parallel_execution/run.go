@@ -11,11 +11,11 @@ type Task func() error
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
+	lessOrZeroM := m <= 0
 	tasksCount := len(tasks)
 	errorTaskCount := 0
 	allHandledCount := 0
 	numCPU := runtime.NumCPU()
-
 	tasksCh := make(chan Task, n)
 
 	// ставим размер в 2 раза больший, чем количество системных обработчиков (чтоб уж наверняка)
@@ -34,7 +34,7 @@ func Run(tasks []Task, n, m int) error {
 			errorTaskCount++
 		}
 
-		isErrErrorsLimitExceed := isErrErrorsLimitExceed(m, errorTaskCount)
+		isErrErrorsLimitExceed := isErrErrorsLimitExceed(m, errorTaskCount, lessOrZeroM)
 		completeHandledCount := completeHandledCount(allHandledCount, tasksCount)
 
 		// пока не выполнилось корнер условие пропускаем итерацию
@@ -51,9 +51,7 @@ func Run(tasks []Task, n, m int) error {
 		}
 	}
 
-	defer func() {
-		close(errorTaskCh)
-	}()
+	defer close(errorTaskCh)
 
 	return nil
 }
@@ -76,8 +74,8 @@ func taskManager(tasks []Task, tasksCh chan Task) {
 	}
 }
 
-func isErrErrorsLimitExceed(m, errorTaskCount int) bool {
-	if m <= 0 && errorTaskCount > 0 || m > 0 && errorTaskCount >= m {
+func isErrErrorsLimitExceed(m, errorTaskCount int, lessOrZeroM bool) bool {
+	if lessOrZeroM || errorTaskCount >= m {
 		return true
 	}
 
