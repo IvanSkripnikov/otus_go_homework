@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"runtime"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
@@ -14,13 +15,13 @@ func Run(tasks []Task, n, m int) error {
 	tasksCount := len(tasks)
 	errorTaskCount := 0
 	allHandledCount := 0
-
+	numCPU := runtime.NumCPU()
 	completeFlagCh := make(chan struct{})
 	tasksCh := make(chan Task, n)
 
 	go taskProducer(tasks, tasksCh, completeFlagCh)
 
-	errorTaskCh := make(chan error, tasksCount)
+	errorTaskCh := make(chan error, numCPU*2)
 	for i := 0; i < n; i++ {
 		go taskConsumer(tasksCh, errorTaskCh, completeFlagCh)
 	}
