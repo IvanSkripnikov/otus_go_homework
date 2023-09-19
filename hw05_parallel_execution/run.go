@@ -18,7 +18,7 @@ func Run(tasks []Task, n, m int) error {
 
 	go taskProducer(tasks, tasksCh)
 
-	errorTaskCh := make(chan error, tasksCount)
+	errorTaskCh := make(chan error, n)
 	for i := 0; i < n; i++ {
 		go taskConsumer(tasksCh, errorTaskCh)
 	}
