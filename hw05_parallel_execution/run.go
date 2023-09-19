@@ -17,13 +17,13 @@ func Run(tasks []Task, n, m int) error {
 
 	completeFlagCh := make(chan struct{})
 	tasksCh := make(chan Task, n)
-	errorTaskCh := make(chan error, tasksCount)
 
+	go taskProducer(tasks, tasksCh, completeFlagCh)
+
+	errorTaskCh := make(chan error, tasksCount)
 	for i := 0; i < n; i++ {
 		go taskConsumer(tasksCh, errorTaskCh, completeFlagCh)
 	}
-
-	go taskProducer(tasks, tasksCh, completeFlagCh)
 
 	for err := range errorTaskCh {
 		allHandledCount++
