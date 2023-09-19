@@ -14,15 +14,13 @@ func Run(tasks []Task, n, m int) error {
 	tasksCount := len(tasks)
 	errorTaskCount := 0
 	allHandledCount := 0
-
-	completeFlagCh := make(chan struct{})
 	tasksCh := make(chan Task, n)
 
-	go taskProducer(tasks, tasksCh, completeFlagCh)
+	go taskProducer(tasks, tasksCh)
 
 	errorTaskCh := make(chan error, tasksCount)
 	for i := 0; i < n; i++ {
-		go taskConsumer(tasksCh, errorTaskCh, completeFlagCh)
+		go taskConsumer(tasksCh, errorTaskCh)
 	}
 
 	for err := range errorTaskCh {
@@ -40,8 +38,6 @@ func Run(tasks []Task, n, m int) error {
 			continue
 		}
 
-		close(completeFlagCh)
-
 		if isErrErrorsLimitExceed {
 			return ErrErrorsLimitExceeded
 		}
@@ -56,28 +52,21 @@ func Run(tasks []Task, n, m int) error {
 	return nil
 }
 
-func taskConsumer(tasksCh chan Task, errorsCh chan error, completeFlagCh chan struct{}) {
+func taskConsumer(tasksCh chan Task, errorTaskCh chan error) {
 	for {
-		select {
-		case task := <-tasksCh:
-			if task != nil {
-				errorsCh <- task()
-			}
-		case <-completeFlagCh:
+		task, ok := <-tasksCh
+		if !ok {
 			return
 		}
+		errorTaskCh <- task()
 	}
 }
 
-func taskProducer(tasks []Task, tasksCh chan Task, completeFlagCh chan struct{}) {
+func taskProducer(tasks []Task, tasksCh chan Task) {
 	defer close(tasksCh)
 
 	for _, task := range tasks {
-		select {
-		case tasksCh <- task:
-		case <-completeFlagCh:
-			return
-		}
+		tasksCh <- task
 	}
 }
 
