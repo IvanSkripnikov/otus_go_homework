@@ -20,10 +20,10 @@ func Run(tasks []Task, n, m int) error {
 	errorTaskCh := make(chan error, tasksCount)
 
 	for i := 0; i < n; i++ {
-		go taskHandler(tasksCh, errorTaskCh, completeFlagCh)
+		go taskConsumer(tasksCh, errorTaskCh, completeFlagCh)
 	}
 
-	go taskManager(tasks, tasksCh, completeFlagCh)
+	go taskProducer(tasks, tasksCh, completeFlagCh)
 
 	for err := range errorTaskCh {
 		allHandledCount++
@@ -51,14 +51,12 @@ func Run(tasks []Task, n, m int) error {
 		}
 	}
 
-	defer func() {
-		close(errorTaskCh)
-	}()
+	defer close(errorTaskCh)
 
 	return nil
 }
 
-func taskHandler(tasksCh chan Task, errorsCh chan error, completeFlagCh chan struct{}) {
+func taskConsumer(tasksCh chan Task, errorsCh chan error, completeFlagCh chan struct{}) {
 	for {
 		select {
 		case task := <-tasksCh:
@@ -71,7 +69,7 @@ func taskHandler(tasksCh chan Task, errorsCh chan error, completeFlagCh chan str
 	}
 }
 
-func taskManager(tasks []Task, tasksCh chan Task, completeFlagCh chan struct{}) {
+func taskProducer(tasks []Task, tasksCh chan Task, completeFlagCh chan struct{}) {
 	defer close(tasksCh)
 
 	for _, task := range tasks {
