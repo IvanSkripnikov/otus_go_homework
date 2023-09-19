@@ -14,15 +14,18 @@ func Run(tasks []Task, n, m int) error {
 	tasksCount := len(tasks)
 	errorTaskCount := 0
 	allHandledCount := 0
-	tasksCh := make(chan Task, n)
+	tasksCh := make(chan Task, tasksCount)
 
+	// аписываем в канал задачи
 	go taskProducer(tasks, tasksCh)
 
+	// заполняем канал с результататми выполнения задач
 	errorTaskCh := make(chan error, tasksCount)
 	for i := 0; i < n; i++ {
 		go taskConsumer(tasksCh, errorTaskCh)
 	}
 
+	// проверяем канал с результатами выполнения задач
 	for err := range errorTaskCh {
 		allHandledCount++
 
@@ -38,10 +41,12 @@ func Run(tasks []Task, n, m int) error {
 			continue
 		}
 
+		// если число ошибок превысило допустимый лимит возвращаем ошибку
 		if isErrErrorsLimitExceed {
 			return ErrErrorsLimitExceeded
 		}
 
+		// если число успешно выполненных задач достигло необходимого количества - завершаем считывание из канала
 		if completeHandledCount {
 			break
 		}
