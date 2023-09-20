@@ -15,7 +15,7 @@ func Run(tasks []Task, n, m int) error {
 	tasksCount := len(tasks)
 	errorTaskCount := 0
 	allHandledCount := 0
-	tasksCh := make(chan Task, tasksCount)
+	tasksCh := make(chan Task)
 
 	mu := sync.Mutex{}
 	mu.Lock()
