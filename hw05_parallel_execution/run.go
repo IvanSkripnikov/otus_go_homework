@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"sync"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
@@ -16,14 +17,19 @@ func Run(tasks []Task, n, m int) error {
 	allHandledCount := 0
 	tasksCh := make(chan Task, tasksCount)
 
+	mu := sync.Mutex{}
+	mu.Lock()
 	// аписываем в канал задачи
 	go taskProducer(tasks, tasksCh)
+	mu.Unlock()
 
+	mu.Lock()
 	// заполняем канал с результататми выполнения задач
 	errorTaskCh := make(chan error, tasksCount)
 	for i := 0; i < n; i++ {
 		go taskConsumer(tasksCh, errorTaskCh)
 	}
+	mu.Unlock()
 
 	// проверяем канал с результатами выполнения задач
 	for err := range errorTaskCh {
