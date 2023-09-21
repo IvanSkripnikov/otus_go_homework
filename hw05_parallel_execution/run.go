@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	"sync"
+	"sync/atomic"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
@@ -15,21 +15,17 @@ func Run(tasks []Task, n, m int) error {
 	tasksCount := len(tasks)
 	errorTaskCount := 0
 	allHandledCount := 0
+	var flagNotWrite int32 = 0
 	tasksCh := make(chan Task)
 
-	mu := sync.Mutex{}
-	mu.Lock()
 	// аписываем в канал задачи
 	go taskProducer(tasks, tasksCh)
-	mu.Unlock()
 
-	mu.Lock()
 	// заполняем канал с результататми выполнения задач
 	errorTaskCh := make(chan error, tasksCount)
 	for i := 0; i < n; i++ {
-		go taskConsumer(tasksCh, errorTaskCh)
+		go taskConsumer(tasksCh, errorTaskCh, flagNotWrite)
 	}
-	mu.Unlock()
 
 	// проверяем канал с результатами выполнения задач
 	for err := range errorTaskCh {
@@ -47,6 +43,9 @@ func Run(tasks []Task, n, m int) error {
 			continue
 		}
 
+		// если же у нас выполнилось необходимое количество задач или произошло ошибок - выставляем флаг
+		atomic.AddInt32(&flagNotWrite, 1)
+
 		// если число ошибок превысило допустимый лимит возвращаем ошибку
 		if isErrErrorsLimitExceed {
 			return ErrErrorsLimitExceeded
@@ -63,8 +62,12 @@ func Run(tasks []Task, n, m int) error {
 	return nil
 }
 
-func taskConsumer(tasksCh chan Task, errorTaskCh chan error) {
+func taskConsumer(tasksCh chan Task, errorTaskCh chan error, flagNotWrite int32) {
 	for {
+		// если выставлен флаг на окончание - не даём записывать в канал
+		if atomic.LoadInt32(&flagNotWrite) > 0 {
+			return
+		}
 		task, ok := <-tasksCh
 		if !ok || task == nil {
 			return
