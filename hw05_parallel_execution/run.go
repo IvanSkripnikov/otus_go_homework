@@ -15,7 +15,7 @@ func Run(tasks []Task, n, m int) error {
 	tasksCount := len(tasks)
 	errorTaskCount := 0
 	allHandledCount := 0
-	var flagNotWrite int32 = 0
+	var flagNotWrite int32
 	tasksCh := make(chan Task)
 
 	// аписываем в канал задачи
