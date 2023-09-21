@@ -19,7 +19,7 @@ func Run(tasks []Task, n, m int) error {
 	tasksCh := make(chan Task)
 
 	// аписываем в канал задачи
-	go taskProducer(tasks, tasksCh)
+	go taskProducer(tasks, tasksCh, flagNotWrite)
 
 	// заполняем канал с результататми выполнения задач
 	errorTaskCh := make(chan error, tasksCount)
@@ -76,8 +76,12 @@ func taskConsumer(tasksCh chan Task, errorTaskCh chan error, flagNotWrite int32)
 	}
 }
 
-func taskProducer(tasks []Task, tasksCh chan Task) {
+func taskProducer(tasks []Task, tasksCh chan Task, flagNotWrite int32) {
 	defer close(tasksCh)
+	// если выставлен флаг на окончание - не даём записывать в канал
+	if atomic.LoadInt32(&flagNotWrite) > 0 {
+		return
+	}
 
 	for _, task := range tasks {
 		tasksCh <- task
