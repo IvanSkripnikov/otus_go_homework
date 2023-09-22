@@ -120,25 +120,13 @@ func TestRun(t *testing.T) {
 	t.Run("tasks with random count errors and success tasks", func(t *testing.T) {
 		tasksCount := 50
 		tasks := make([]Task, 0, tasksCount)
+		var runSuccessCount, runErrorCount int32
+		maxErrorsCount := 5
 		rand.Seed(time.Now().UnixNano())
 
-		var runSuccessCount int32
-		var runErrorCount int32
-		maxErrorsCount := 5
-
 		for i := 0; i < tasksCount; i++ {
-			if i < maxErrorsCount {
-				tasks = append(tasks, func() error {
-					time.Sleep(time.Millisecond * time.Duration(rand.Intn(170)))
-					atomic.AddInt32(&runErrorCount, 1)
-
-					return fmt.Errorf("error from task %d", i)
-				})
-				continue
-			}
 			randNumber := rand.Intn(100) % 2
-
-			if randNumber == 0 {
+			if i < maxErrorsCount || randNumber == 0 {
 				tasks = append(tasks, func() error {
 					time.Sleep(time.Millisecond * time.Duration(rand.Intn(170)))
 					atomic.AddInt32(&runErrorCount, 1)
