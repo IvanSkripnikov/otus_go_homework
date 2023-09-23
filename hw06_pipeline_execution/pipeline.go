@@ -1,4 +1,6 @@
-package hw06pipelineexecution
+package main
+
+import "fmt"
 
 type (
 	In  = <-chan interface{}
@@ -11,4 +13,8 @@ type Stage func(in In) (out Out)
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	// Place your code here.
 	return nil
+}
+
+func main() {
+	fmt.Println("work")
 }
