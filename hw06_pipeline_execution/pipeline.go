@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 type (
 	In  = <-chan interface{}
 	Out = In
@@ -11,10 +9,18 @@ type (
 type Stage func(in In) (out Out)
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
-	// Place your code here.
-	return nil
-}
+	var out Out
+	for key, stage := range stages {
+		if key == 0 {
+			out = stage(in)
+		} else {
+			out = stage(out)
+		}
+	}
 
-func main() {
-	fmt.Println("work")
+	if out != nil {
+		return out
+	}
+
+	return nil
 }
