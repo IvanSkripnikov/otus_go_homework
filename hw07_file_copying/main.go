@@ -20,7 +20,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	err := Copy("1.txt", "2.txt", 0, 5)
+	err := Copy("1.txt", "2.txt", 1, 100)
 
 	fmt.Println(err)
 }

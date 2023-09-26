@@ -15,59 +15,79 @@ var (
 
 func Copy(fromPath, toPath string, offset, limit int64) error { // мы заранее знаем сколько хотим прочитать
 	// открываем файл
-	file, errOpen := os.Open(fromPath)
+	readFile, errOpen := os.Open(fromPath)
 	if errOpen != nil {
 		fmt.Println(errOpen)
 		return nil
 	}
 
 	// проверяем, не превышает ли offset размер файла
-	if isOffsetExceedsFileSize(file, offset) {
-		return ErrOffsetExceedsFileSize
-	}
+	body, errRead := getFileBody(readFile, offset, limit)
+	fmt.Println(body, errRead)
 
-	b, err := os.ReadFile(fromPath)
+	// закрываем файл с которого читали
+	defer readFile.Close()
 
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println(string(b))
-
-	file, errCreate := os.Create(toPath)
-
+	writeFile, errCreate := os.Create(toPath)
 	if errCreate != nil {
 		return errCreate
 	}
-	written, err := file.Write(b)
+	written, err := writeFile.Write([]byte(body))
 	if err != nil {
 		log.Panicf("failed to write: %v", err)
 	}
 	fmt.Println(written)
 	// мы записали 1M данных !
-	defer file.Close() // чтобы очистить буферы ОС
+	defer writeFile.Close() // чтобы очистить буферы ОС
 
 	return nil
 }
 
-func isOffsetExceedsFileSize(file *os.File, offset int64) bool {
-	var readSize int64
-	var readen int64
+func getFileBody(file *os.File, offset, limit int64) (string, error) {
+	var readSize, readen, counter int64
+
 	readSize = 1024
+	stopReadFlag := false
 
-	buf := make([]byte, readSize)
-	for readen < readSize {
-		read, err := file.Read(buf[readen:])
-
-		readen += int64(read)
-		if err == io.EOF {
-			// что если не дочитали ?
+	var buf []byte
+	for {
+		if stopReadFlag {
 			break
 		}
-		if err != nil {
-			log.Panicf("failed to read: %v", err)
+		buf = make([]byte, readSize)
+		counter++
+
+		for readen <= readSize*counter {
+			if readen < offset {
+				readen++
+				buf = make([]byte, readSize)
+				continue
+			}
+			read, err := file.Read(buf[:])
+			readen += int64(read)
+			if err == io.EOF {
+				stopReadFlag = true
+				break
+			}
+			if err != nil {
+				log.Panicf("failed to read: %v", err)
+			}
 		}
 	}
-	fmt.Println("output", string(buf))
-	return offset > readen
+
+	if offset > readen {
+		return "", ErrOffsetExceedsFileSize
+	}
+
+	if limit > readen {
+		limit = readen
+	}
+
+	if limit > 0 {
+		buf = buf[offset : offset+limit]
+	} else {
+		buf = buf[offset:limit]
+	}
+
+	return string(buf), nil
 }
