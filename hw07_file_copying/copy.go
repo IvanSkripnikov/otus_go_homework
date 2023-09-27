@@ -11,70 +11,62 @@ import (
 var (
 	ErrUnsupportedFile       = errors.New("unsupported file")
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
+	ErrOpenFile              = errors.New("can't open file")
+	ErrCreateFile            = errors.New("can't create file")
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error { // мы заранее знаем сколько хотим прочитать
 	// открываем файл
 	readFile, errOpen := os.Open(fromPath)
 	if errOpen != nil {
-		fmt.Println(errOpen)
-		return nil
+		return ErrOpenFile
 	}
 
-	// проверяем, не превышает ли offset размер файла
 	body, errRead := getFileBody(readFile, offset, limit)
-	fmt.Println(body, errRead)
-
-	// закрываем файл с которого читали
-	defer readFile.Close()
-
+	if errRead != nil {
+		return errRead
+	}
+	fmt.Println(body)
 	writeFile, errCreate := os.Create(toPath)
 	if errCreate != nil {
-		return errCreate
+		return ErrCreateFile
 	}
 	written, err := writeFile.Write([]byte(body))
 	if err != nil {
 		log.Panicf("failed to write: %v", err)
 	}
 	fmt.Println(written)
-	// мы записали 1M данных !
-	defer writeFile.Close() // чтобы очистить буферы ОС
+
+	// закрываем файл с которыми работали
+	defer func() {
+		writeFile.Close()
+		readFile.Close()
+	}()
 
 	return nil
 }
 
 func getFileBody(file *os.File, offset, limit int64) (string, error) {
-	var readSize, readen, counter int64
-
+	var readSize, readen int64
 	readSize = 1024
-	stopReadFlag := false
-
 	var buf []byte
+
 	for {
-		if stopReadFlag {
+		fmt.Println("cycle", readen, readSize, offset, limit)
+		read, err := file.Read(buf[readen:])
+		readen += int64(read)
+		if err == io.EOF {
 			break
 		}
-		buf = make([]byte, readSize)
-		counter++
-
-		for readen <= readSize*counter {
-			if readen < offset {
-				readen++
-				buf = make([]byte, readSize)
-				continue
-			}
-			read, err := file.Read(buf[:])
-			readen += int64(read)
-			if err == io.EOF {
-				stopReadFlag = true
-				break
-			}
-			if err != nil {
-				log.Panicf("failed to read: %v", err)
-			}
+		if err != nil {
+			log.Panicf("failed to read: %v", err)
+		}
+		if readen < offset {
+			buf = make([]byte, readSize)
 		}
 	}
 
+	// проверяем, не превышает ли offset размер файла
 	if offset > readen {
 		return "", ErrOffsetExceedsFileSize
 	}
@@ -86,7 +78,7 @@ func getFileBody(file *os.File, offset, limit int64) (string, error) {
 	if limit > 0 {
 		buf = buf[offset : offset+limit]
 	} else {
-		buf = buf[offset:limit]
+		buf = buf[offset:]
 	}
 
 	return string(buf), nil
