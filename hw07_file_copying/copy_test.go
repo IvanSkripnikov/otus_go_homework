@@ -74,4 +74,42 @@ func TestCopy(t *testing.T) {
 		require.Nil(t, res)
 		require.Equal(t, string(contentMatch), string(contentOut))
 	})
+
+	t.Run("case offset=0 limit=1000", func(t *testing.T) {
+		res := Copy(fileInput, fileOutput, 0, 1000)
+
+		fileOut, _ := os.Open(fileOutput)
+		contentOut, _ := io.ReadAll(fileOut)
+
+		fileMatch, _ := os.Open("./testdata/out_offset0_limit1000.txt")
+		contentMatch, _ := io.ReadAll(fileMatch)
+
+		defer func() {
+			fileOut.Close()
+			fileMatch.Close()
+			os.Remove(fileOutput)
+		}()
+
+		require.Nil(t, res)
+		require.Equal(t, string(contentMatch), string(contentOut))
+	})
+
+	t.Run("case offset=0 limit=10000", func(t *testing.T) {
+		res := Copy(fileInput, fileOutput, 0, 10000)
+
+		fileOut, _ := os.Open(fileOutput)
+		contentOut, _ := io.ReadAll(fileOut)
+
+		fileMatch, _ := os.Open("./testdata/out_offset0_limit10000.txt")
+		contentMatch, _ := io.ReadAll(fileMatch)
+
+		defer func() {
+			fileOut.Close()
+			fileMatch.Close()
+			os.Remove(fileOutput)
+		}()
+
+		require.Nil(t, res)
+		require.Equal(t, string(contentMatch), string(contentOut))
+	})
 }

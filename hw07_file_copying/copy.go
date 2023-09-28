@@ -62,6 +62,11 @@ func getFileBody(file *os.File, offset, limit int64) (string, error) {
 		return "", ErrOffsetExceedsFileSize
 	}
 
+	// если limit больше размера файла - обнуляем его
+	if limit > int64(len(output)) {
+		limit = 0
+	}
+
 	if limit > 0 {
 		output = output[offset : offset+limit+nlCounter]
 	} else {
