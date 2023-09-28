@@ -47,9 +47,15 @@ func Copy(fromPath, toPath string, offset, limit int64) error { // мы зара
 func getFileBody(file *os.File, offset, limit int64) (string, error) {
 	output := ""
 	scanner := bufio.NewScanner(file)
+	var nlCounter int64
+
 	for scanner.Scan() {
-		output += scanner.Text()
+		if limit > int64(len(output))-offset {
+			nlCounter++
+		}
+		output += scanner.Text() + "\r\n"
 	}
+	nlCounter--
 
 	// проверяем, не превышает ли offset размер файла
 	if offset > int64(len(output)) {
@@ -57,7 +63,7 @@ func getFileBody(file *os.File, offset, limit int64) (string, error) {
 	}
 
 	if limit > 0 {
-		output = output[offset : offset+limit]
+		output = output[offset : offset+limit+nlCounter]
 	} else {
 		output = output[offset:]
 	}
