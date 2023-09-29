@@ -122,7 +122,7 @@ func TestCopy(t *testing.T) {
 		require.Equal(t, string(contentMatch), string(contentOut))
 	})
 
-	/*t.Run("case offset=100 limit=1000", func(t *testing.T) {
+	t.Run("case offset=100 limit=1000", func(t *testing.T) {
 		res := Copy(fileInput, fileOutput, 100, 1000)
 
 		fileOut, _ := os.Open(fileOutput)
@@ -139,5 +139,5 @@ func TestCopy(t *testing.T) {
 
 		require.Nil(t, res)
 		require.Equal(t, string(contentMatch), string(contentOut))
-	})*/
+	})
 }
