@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 var (
@@ -15,6 +16,10 @@ var (
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error { // мы заранее знаем сколько хотим прочитать
+	extension := filepath.Ext(fromPath)
+	if extension != ".txt" {
+		return ErrUnsupportedFile
+	}
 	// открываем файл
 	readFile, errOpen := os.Open(fromPath)
 	if errOpen != nil {
