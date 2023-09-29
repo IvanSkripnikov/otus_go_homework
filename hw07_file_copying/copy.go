@@ -3,9 +3,12 @@ package main
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -52,12 +55,15 @@ func Copy(fromPath, toPath string, offset, limit int64) error { // мы зара
 func getFileBody(file *os.File, offset, limit int64) (string, error) {
 	output := ""
 	scanner := bufio.NewScanner(file)
-	var nlCounterBack, nlCounterFront, lenOutput int64
+	var nlCounterBack, nlCounterFront int64
+
+	fileStat, _ := file.Stat()
+	fileSize := fileStat.Size()
+	bar := pb.StartNew(int(fileSize))
 
 	for scanner.Scan() {
-		//fmt.Println(scanner.Text())
+		bar.Add(len(scanner.Text() + "\r\n"))
 		if limit > int64(len(output))-offset {
-			//		fmt.Println(nlCounterBack, limit, int64(len(output))-offset)
 			nlCounterBack++
 
 		}
@@ -67,25 +73,32 @@ func getFileBody(file *os.File, offset, limit int64) (string, error) {
 		output += scanner.Text() + "\r\n"
 	}
 
+	// если была только одна строка
+	if nlCounterBack == 1 {
+		bar.Add(-2)
+	}
+
+	bar.Finish()
+	fmt.Println("\\r\\n")
+
 	if offset == 0 {
 		nlCounterBack--
 	}
 
-	lenOutput = int64(len(output))
-
 	// проверяем, не превышает ли offset размер файла
-	if offset > lenOutput {
+	if offset > fileSize {
 		return "", ErrOffsetExceedsFileSize
 	}
 
 	// если limit больше размера файла - обнуляем его
-	if limit > lenOutput {
+	if limit > fileSize {
 		limit = 0
 	}
 
+	// проверяем, не выходим ли за границы строки
 	finalLength := offset + limit + nlCounterBack
-	if finalLength > lenOutput {
-		finalLength = lenOutput
+	if finalLength > fileSize {
+		finalLength = fileSize
 		nlCounterFront--
 	}
 
