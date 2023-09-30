@@ -89,6 +89,12 @@ func getFileBody(file *os.File, offset, limit int64) (string, error) {
 		return "", ErrOffsetExceedsFileSize
 	}
 
+	output = cutOutput(output, fileSize, nlCounterBack, nlCounterFront, offset, limit)
+
+	return output, nil
+}
+
+func cutOutput(output string, fileSize, nlCounterBack, nlCounterFront, offset, limit int64) string {
 	// если limit больше размера файла - обнуляем его
 	if limit > fileSize {
 		limit = 0
@@ -107,5 +113,5 @@ func getFileBody(file *os.File, offset, limit int64) (string, error) {
 		output = output[offset+nlCounterFront:]
 	}
 
-	return output, nil
+	return output
 }
