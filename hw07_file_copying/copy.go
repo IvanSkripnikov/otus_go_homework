@@ -69,16 +69,16 @@ func getFileBody(file *os.File, offset, limit int64) (string, error) {
 		if int64(len(output)) < offset {
 			nlCounterFront++
 		}
-		output += scanner.Text() + "\r\n"
+		output += scanner.Text() + "\n"
 	}
 
 	// если была только одна строка
 	if nlCounterBack == 1 {
-		bar.Add(-2)
+		bar.Add(-1)
 	}
 
 	bar.Finish()
-	fmt.Println("\\r\\n")
+	fmt.Println("\\n")
 
 	if offset == 0 {
 		nlCounterBack--
