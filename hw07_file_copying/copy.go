@@ -55,7 +55,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error { // мы зара
 func getFileBody(file *os.File, offset, limit int64) (string, error) {
 	output := ""
 	scanner := bufio.NewScanner(file)
-	var nlCounterBack int64
+	var nlCounterBack, nlCounterFront int64
 
 	fileStat, _ := file.Stat()
 	fileSize := fileStat.Size()
@@ -77,16 +77,20 @@ func getFileBody(file *os.File, offset, limit int64) (string, error) {
 	bar.Finish()
 	fmt.Println("\\n")
 
+	if offset == 0 {
+		nlCounterBack--
+	}
+
 	// проверяем, не превышает ли offset размер файла
 	if offset > fileSize {
 		return "", ErrOffsetExceedsFileSize
 	}
-	output = cutOutput(output, fileSize, offset, limit)
+	output = cutOutput(output, fileSize, nlCounterFront, offset, limit)
 
 	return output, nil
 }
 
-func cutOutput(output string, fileSize, offset, limit int64) string {
+func cutOutput(output string, fileSize, nlCounterFront, offset, limit int64) string {
 	// если limit больше размера файла - обнуляем его
 	if limit > fileSize {
 		limit = 0
@@ -96,12 +100,13 @@ func cutOutput(output string, fileSize, offset, limit int64) string {
 	finalLength := offset + limit
 	if finalLength > fileSize {
 		finalLength = fileSize
+		nlCounterFront--
 	}
 
 	if limit > 0 {
-		output = output[offset:finalLength]
+		output = output[offset+nlCounterFront : finalLength]
 	} else {
-		output = output[offset:]
+		output = output[offset+nlCounterFront:]
 	}
 
 	return output
