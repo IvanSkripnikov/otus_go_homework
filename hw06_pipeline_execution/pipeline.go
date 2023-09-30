@@ -9,18 +9,31 @@ type (
 type Stage func(in In) (out Out)
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
+	var breakOut = make(Bi)
+	// Если отсутствуют тапы пайплайна - ничего не делаем
+	if len(stages) == 0 {
+		return breakOut
+	}
+
 	var out Out
-	for key, stage := range stages {
-		if key == 0 {
-			out = stage(in)
+
+	for _, stage := range stages {
+		if done != nil {
+
+			for {
+				select {
+				case <-done:
+					return breakOut
+				default:
+					out = stage(out)
+					break
+				}
+			}
+
 		} else {
 			out = stage(out)
 		}
 	}
 
-	if out != nil {
-		return out
-	}
-
-	return nil
+	return out
 }
