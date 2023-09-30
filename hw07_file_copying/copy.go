@@ -93,15 +93,17 @@ func cutOutput(output string, fileSize, offset, limit int64) string {
 	}
 
 	// проверяем, не выходим ли за границы строки
+	var nlCounterFront int64
 	finalLength := offset + limit
 	if finalLength > fileSize {
 		finalLength = fileSize
+		nlCounterFront++
 	}
 
 	if limit > 0 {
-		output = output[offset:finalLength]
+		output = output[offset+nlCounterFront : finalLength]
 	} else {
-		output = output[offset:]
+		output = output[offset+nlCounterFront:]
 	}
 
 	return output
