@@ -2,10 +2,11 @@ package main
 
 import (
 	"errors"
-	"github.com/stretchr/testify/require"
 	"io"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestCopyErrors(t *testing.T) {

@@ -65,7 +65,6 @@ func getFileBody(file *os.File, offset, limit int64) (string, error) {
 		bar.Add(len(scanner.Text() + "\r\n"))
 		if limit > int64(len(output))-offset {
 			nlCounterBack++
-
 		}
 		if int64(len(output)) < offset {
 			nlCounterFront++
