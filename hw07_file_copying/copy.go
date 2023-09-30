@@ -100,7 +100,6 @@ func cutOutput(output string, fileSize, nlCounterFront, offset, limit int64) str
 	finalLength := offset + limit
 	if finalLength > fileSize {
 		finalLength = fileSize
-		nlCounterFront--
 	}
 
 	if limit > 0 {
