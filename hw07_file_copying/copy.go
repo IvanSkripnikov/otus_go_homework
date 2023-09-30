@@ -89,19 +89,19 @@ func getFileBody(file *os.File, offset, limit int64) (string, error) {
 		return "", ErrOffsetExceedsFileSize
 	}
 
-	output = cutOutput(output, fileSize, nlCounterBack, nlCounterFront, offset, limit)
+	output = cutOutput(output, fileSize, nlCounterFront, offset, limit)
 
 	return output, nil
 }
 
-func cutOutput(output string, fileSize, nlCounterBack, nlCounterFront, offset, limit int64) string {
+func cutOutput(output string, fileSize, nlCounterFront, offset, limit int64) string {
 	// если limit больше размера файла - обнуляем его
 	if limit > fileSize {
 		limit = 0
 	}
 
 	// проверяем, не выходим ли за границы строки
-	finalLength := offset + limit + nlCounterBack
+	finalLength := offset + limit
 	if finalLength > fileSize {
 		finalLength = fileSize
 		nlCounterFront--
