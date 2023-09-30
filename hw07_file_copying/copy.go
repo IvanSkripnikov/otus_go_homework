@@ -62,7 +62,7 @@ func getFileBody(file *os.File, offset, limit int64) (string, error) {
 	bar := pb.StartNew(int(fileSize))
 
 	for scanner.Scan() {
-		bar.Add(len(scanner.Text() + "\r\n"))
+		bar.Add(len(scanner.Text() + "\n"))
 		if limit > int64(len(output))-offset {
 			nlCounterBack++
 		}
