@@ -66,9 +66,6 @@ func getFileBody(file *os.File, offset, limit int64) (string, error) {
 		if limit > int64(len(output))-offset {
 			nlCounterBack++
 		}
-		if int64(len(output)) < offset {
-			nlCounterFront++
-		}
 		output += scanner.Text() + "\n"
 	}
 
@@ -88,7 +85,6 @@ func getFileBody(file *os.File, offset, limit int64) (string, error) {
 	if offset > fileSize {
 		return "", ErrOffsetExceedsFileSize
 	}
-
 	output = cutOutput(output, fileSize, nlCounterFront, offset, limit)
 
 	return output, nil
