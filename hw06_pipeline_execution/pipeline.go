@@ -11,9 +11,12 @@ type Stage func(in In) (out Out)
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	out := in
 
+	emptyResult := make(Bi)
+	close(emptyResult)
+
 	// если в пайплайне нет этапов, выходим из функции
 	if len(stages) == 0 {
-		return nil
+		return emptyResult
 	}
 
 	for _, stage := range stages {
