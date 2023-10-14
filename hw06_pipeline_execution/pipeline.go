@@ -9,7 +9,7 @@ type (
 type Stage func(in In) (out Out)
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
-	var out = in
+	out := in
 
 	// если  пайплайне нет этапов, выходим из функции
 	if len(stages) == 0 {
