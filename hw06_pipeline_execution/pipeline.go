@@ -11,7 +11,7 @@ type Stage func(in In) (out Out)
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	out := in
 
-	// если  пайплайне нет этапов, выходим из функции
+	// если в пайплайне нет этапов, выходим из функции
 	if len(stages) == 0 {
 		return nil
 	}
