@@ -121,11 +121,11 @@ func TestPipeline(t *testing.T) {
 		require.Equal(t, []string{"1", "2", "3", "4", "5"}, result)
 		require.Less(t,
 			int64(elapsed),
-			// ~0.8s for processing 5 values in 5 stages (100ms every) concurrently
+			// ~0.8s for processing 5 values in 6 stages (100ms every) concurrently
 			int64(sleepPerStage)*int64(len(newStages)+len(data)-1)+int64(fault))
 	})
 
-	/*t.Run("pipeline without stages", func(t *testing.T) {
+	t.Run("pipeline without stages", func(t *testing.T) {
 		in := make(Bi)
 		data := []int{1, 2, 3, 4, 5}
 
@@ -146,5 +146,5 @@ func TestPipeline(t *testing.T) {
 
 		require.Len(t, result, 0)
 		require.Less(t, int64(elapsed), int64(fault))
-	})*/
+	})
 }
