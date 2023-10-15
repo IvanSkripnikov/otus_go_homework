@@ -34,7 +34,10 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 }
 
 func execute(out Out, done In, result Bi) {
-	defer close(result)
+	defer func() {
+		<-out
+		close(result)
+	}()
 
 	for {
 		select {
