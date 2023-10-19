@@ -20,6 +20,7 @@ var (
 
 func Copy(fromPath, toPath string, offset, limit int64) error { // мы заранее знаем сколько хотим прочитать
 	extension := filepath.Ext(fromPath)
+	// роверяем на допустимое расширение
 	if extension != ".txt" {
 		return ErrUnsupportedFile
 	}
@@ -29,11 +30,13 @@ func Copy(fromPath, toPath string, offset, limit int64) error { // мы зара
 		return ErrOpenFile
 	}
 
+	// считываем данные с файла
 	body, errRead := getFileBody(readFile, offset, limit)
 	if errRead != nil {
 		return errRead
 	}
 
+	// создаём файл для записи
 	writeFile, errCreate := os.Create(toPath)
 	if errCreate != nil {
 		return ErrCreateFile
