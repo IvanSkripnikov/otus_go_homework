@@ -1,11 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
-	"io"
 	"log"
-	"math"
 	"os"
 	"path/filepath"
 
@@ -30,84 +29,18 @@ func Copy(fromPath, toPath string, offset, limit int64) error { // мы зара
 		return ErrOpenFile
 	}
 
-	fileStat, _ := readFile.Stat()
-	fileSize := fileStat.Size()
-
-	// проверяем, не превышает ли offset размер файла
-	if offset > fileSize {
-		return ErrOffsetExceedsFileSize
+	body, errRead := getFileBody(readFile, offset, limit)
+	if errRead != nil {
+		return errRead
 	}
 
-	bufferSize := 1024
-	buffer := make([]byte, bufferSize)
-	clearBuffer := make([]byte, bufferSize)
-
-	// Настраиваем прогресс бар
-	progressCounts := getProgressBarLimit(fileSize, offset)
-
-	bar := pb.StartNew(progressCounts)
-	bar.Set(pb.Bytes, true)
-	defer bar.Finish()
-
-	writeFile, errWrite := os.OpenFile(toPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
-	if errWrite != nil {
+	writeFile, errCreate := os.Create(toPath)
+	if errCreate != nil {
 		return ErrCreateFile
 	}
-
-	var writeOffset int64
-	hasEndWrite := false
-
-	for offset < fileSize {
-		read, errRead := readFile.ReadAt(buffer, offset)
-		if errRead != nil && errRead != io.EOF {
-			errMessage := fmt.Sprintf("error reading from input file, error: %v", errRead)
-			return errors.New(errMessage)
-		}
-
-		switch {
-		// Если прочитали меньше чем ожидалось, то уменьшаем размер буфера
-		case read < bufferSize:
-			buffer = buffer[:read]
-			// buffer = buffer[offset : offset+limit]
-			hasEndWrite = true
-
-		// Если заданый лимит меньше чем прочитаная часть данных, то уменьшаем размер буфера
-		case limit > 0 && limit < int64(read):
-			buffer = buffer[:limit]
-			hasEndWrite = true
-
-		// Если текущий проход записи данных, превышает заданый лимит, то уменьшаем размер буфера
-		case limit > 0 && limit < writeOffset+int64(bufferSize):
-			sliceOffset := int64(math.Abs(float64(writeOffset - limit)))
-			buffer = buffer[:sliceOffset]
-			hasEndWrite = true
-		}
-
-		written, errWrite := writeFile.WriteAt(buffer, writeOffset)
-		if errWrite != nil {
-			errRemove := os.Remove(toPath)
-			if errRemove != nil {
-				log.Println(errRemove)
-			}
-
-			errMessage := fmt.Sprintf("error writing to output file, error: %v", errWrite)
-			return errors.New(errMessage)
-		}
-
-		// инкерментим прогрессбар
-		bar.Add(written)
-
-		// очищаем буфер
-		copy(buffer, clearBuffer)
-
-		// перемещаем позицию для следующего чтения в файле
-		offset += int64(read)
-		writeOffset += int64(read)
-
-		// проверяем условия выхода из цикла записи
-		if errRead == io.EOF || hasEndWrite {
-			break
-		}
+	_, err := writeFile.Write([]byte(body))
+	if err != nil {
+		log.Panicf("failed to write: %v", err)
 	}
 
 	// закрываем файл с которыми работали
@@ -119,68 +52,57 @@ func Copy(fromPath, toPath string, offset, limit int64) error { // мы зара
 	return nil
 }
 
-/*
-	func getFileBody(file *os.File, offset, limit int64) (string, error) {
-		output := ""
-		scanner := bufio.NewScanner(file)
-		var nlCounterBack int64
+func getFileBody(file *os.File, offset, limit int64) (string, error) {
+	output := ""
+	scanner := bufio.NewScanner(file)
+	var nlCounterBack int64
 
-		fileStat, _ := file.Stat()
-		fileSize := fileStat.Size()
-		bar := pb.StartNew(int(fileSize))
+	fileStat, _ := file.Stat()
+	fileSize := fileStat.Size()
+	bar := pb.StartNew(int(fileSize))
 
-		for scanner.Scan() {
-			bar.Add(len(scanner.Text() + "\n"))
-			if limit > int64(len(output))-offset {
-				nlCounterBack++
-			}
-			output += scanner.Text() + "\n"
+	for scanner.Scan() {
+		bar.Add(len(scanner.Text() + "\n"))
+		if limit > int64(len(output))-offset {
+			nlCounterBack++
 		}
-
-		// если была только одна строка
-		if nlCounterBack == 1 {
-			bar.Add(-1)
-		}
-
-		bar.Finish()
-		fmt.Println("\\n")
-
-		// проверяем, не превышает ли offset размер файла
-		if offset > fileSize {
-			return "", ErrOffsetExceedsFileSize
-		}
-		output = cutOutput(output, fileSize, offset, limit)
-
-		return output, nil
+		output += scanner.Text() + "\n"
 	}
 
-	func cutOutput(output string, fileSize, offset, limit int64) string {
-		// если limit больше размера файла - обнуляем его
-		if limit > fileSize {
-			limit = 0
-		}
-
-		// проверяем, не выходим ли за границы строки
-		finalLength := offset + limit
-		if finalLength > fileSize {
-			finalLength = fileSize
-		}
-
-		if limit > 0 {
-			output = output[offset:finalLength]
-		} else {
-			output = output[offset:]
-		}
-
-		return output
-	}
-*/
-func getProgressBarLimit(inputFileSize, offset int64) int {
-	progressCounts := int(inputFileSize - offset)
-
-	if limit > 0 && limit < (inputFileSize-offset) {
-		progressCounts = int(limit)
+	// если была только одна строка
+	if nlCounterBack == 1 {
+		bar.Add(-1)
 	}
 
-	return progressCounts
+	bar.Finish()
+	fmt.Println("\\n")
+
+	// проверяем, не превышает ли offset размер файла
+	if offset > fileSize {
+		return "", ErrOffsetExceedsFileSize
+	}
+	output = cutOutput(output, fileSize, offset, limit)
+
+	return output, nil
+}
+
+func cutOutput(output string, fileSize, offset, limit int64) string {
+	// если limit больше размера файла - обнуляем его
+	if limit > fileSize {
+		limit = 0
+	}
+
+	// проверяем, не выходим ли за границы строки
+	finalLength := offset + limit
+	if finalLength > fileSize {
+		finalLength = fileSize
+	}
+
+	if limit > 0 {
+		output = output[offset:finalLength]
+	} else {
+		output = output[offset:]
+	}
+
+	return output
 }
