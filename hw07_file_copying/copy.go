@@ -43,7 +43,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error { // мы зара
 	clearBuffer := make([]byte, bufferSize)
 
 	// Настраиваем прогресс бар
-	progressCounts := getProgressCounts(fileSize, offset)
+	progressCounts := getProgressBarLimit(fileSize, offset)
 
 	bar := pb.StartNew(progressCounts)
 	bar.Set(pb.Bytes, true)
@@ -68,6 +68,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error { // мы зара
 		// Если прочитали меньше чем ожидалось, то уменьшаем размер буфера
 		case read < bufferSize:
 			buffer = buffer[:read]
+			buffer = buffer[offset : offset+limit]
 			hasEndWrite = true
 
 		// Если заданый лимит меньше чем прочитаная часть данных, то уменьшаем размер буфера
@@ -93,18 +94,17 @@ func Copy(fromPath, toPath string, offset, limit int64) error { // мы зара
 			return errors.New(errMessage)
 		}
 
-		// Добавляем количество записанных байт в прогрессбар
+		// инкерментим прогрессбар
 		bar.Add(written)
 
-		// Очищаем буфер с данными
+		// очищаем буфер
 		copy(buffer, clearBuffer)
 
-		// Смещаем позицию в файле
+		// перемещаем позицию для следующего чтения в файле
 		offset += int64(read)
 		writeOffset += int64(read)
 
-		// Если файл дочитан до конца, или установлен флаг
-		// что запрошенный объем данных уже был записан, то выходим из цикла
+		// проверяем условия выхода из цикла записи
 		if errRead == io.EOF || hasEndWrite {
 			break
 		}
@@ -175,7 +175,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error { // мы зара
 		return output
 	}
 */
-func getProgressCounts(inputFileSize, offset int64) int {
+func getProgressBarLimit(inputFileSize, offset int64) int {
 	progressCounts := int(inputFileSize - offset)
 
 	if limit > 0 && limit < (inputFileSize-offset) {
