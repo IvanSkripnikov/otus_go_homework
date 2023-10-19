@@ -32,7 +32,7 @@ func TestCopy(t *testing.T) {
 	fileInput := "./testdata/input.txt"
 	fileOutput := "./testdata/test.txt"
 
-	/*t.Run("case custom copy success", func(t *testing.T) {
+	t.Run("case custom copy success", func(t *testing.T) {
 		res := Copy("./testdata/1.txt", fileOutput, 3, 1)
 
 		file, _ := os.Open(fileOutput)
@@ -45,7 +45,7 @@ func TestCopy(t *testing.T) {
 
 		require.Nil(t, res)
 		require.Equal(t, "s", string(content))
-	})*/
+	})
 
 	t.Run("case offset=0 limit=0", func(t *testing.T) {
 		res := Copy(fileInput, fileOutput, 0, 0)
