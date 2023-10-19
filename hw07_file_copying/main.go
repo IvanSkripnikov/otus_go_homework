@@ -22,6 +22,6 @@ func main() {
 
 	err := Copy(from, to, offset, limit)
 	if err != nil {
-		log.Fatalf("Error: %v \n", err)
+		log.Fatalf("Error during copying: %v \n", err)
 	}
 }
