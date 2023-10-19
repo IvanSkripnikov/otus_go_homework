@@ -34,7 +34,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error { // мы зара
 		return errRead
 	}
 
-	writeFile, errCreate := os.Create(toPath)
+	writeFile, errCreate := os.OpenFile(toPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
 	if errCreate != nil {
 		return ErrCreateFile
 	}
