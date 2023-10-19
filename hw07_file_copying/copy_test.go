@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"fmt"
 	"io"
 	"os"
 	"testing"
@@ -8,156 +10,147 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-/*
-	func TestCopyErrors(t *testing.T) {
-		fileOutput := "./testdata/test.txt"
+const (
+	inputPath  = "testdata/input.txt"
+	outputPath = "/tmp/out.txt"
+)
 
-		t.Run("case error ErrOpenFile", func(t *testing.T) {
-			err := Copy("random_name.txt", fileOutput, 50, 0)
-			require.Truef(t, errors.Is(err, ErrOpenFile), "actual error %q", err)
-		})
+type InputData struct {
+	from      string // Путь к исходному файлу
+	to        string // Путь к выходному файлу
+	offset    int64  // Смещение в исходном файле
+	limit     int64  // Необходимое количество записываемых байтов
+	reference string // Путь к эталонному файлу для сравнения
+}
 
-		t.Run("case error ErrOffsetExceedsFileSize", func(t *testing.T) {
-			err := Copy("./testdata/1.txt", fileOutput, 50, 0)
-			require.Truef(t, errors.Is(err, ErrOffsetExceedsFileSize), "actual error %q", err)
-		})
+// Положительные сценарии копирования файлов.
+func TestCopy(t *testing.T) {
+	tests := []struct {
+		name  string
+		input InputData
+	}{
+		{name: "full coping", input: InputData{
+			from: inputPath, to: outputPath, offset: 0, limit: 0,
+			reference: "testdata/out_offset0_limit0.txt",
+		}},
+		{name: "coping from 0 limit 1000", input: InputData{
+			from: inputPath, to: outputPath, offset: 0, limit: 1000,
+			reference: "testdata/out_offset0_limit1000.txt",
+		}},
+		{name: "coping from 1000 limit 2000", input: InputData{
+			from: inputPath, to: outputPath, offset: 1000, limit: 2000,
+			reference: "testdata/out_offset1000_limit2000.txt",
+		}},
+		{name: "coping from 2500 limit 3050", input: InputData{
+			from: inputPath, to: outputPath, offset: 2500, limit: 3050,
+			reference: "testdata/out_offset2500_limit3050.txt",
+		}},
+		{name: "coping from -200 limit 1000", input: InputData{
+			from: inputPath, to: outputPath, offset: -200, limit: 1000,
+			reference: "testdata/out_offset-200_limit1000.txt",
+		}},
+	}
 
-		t.Run("case error ErrUnsupportedFile", func(t *testing.T) {
-			err := Copy("./testdata/image.png", fileOutput, 0, 10)
-			require.Truef(t, errors.Is(err, ErrUnsupportedFile), "actual error %q", err)
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			err := Copy(tc.input.from, tc.input.to, tc.input.offset, tc.input.limit)
+			require.NoError(t, err)
+
+			// Получаем контрольную сумму выходного файла
+			outputSum, errOutputSum := getMd5Sum(tc.input.to)
+			require.NoError(t, errOutputSum)
+
+			// Получаем контрольную сумму эталонного файла
+			referenceSum, errReferenceSum := getMd5Sum(tc.input.reference)
+			require.NoError(t, errReferenceSum)
+
+			// Проверяем соответствие между выходным и эталонным файлом по контрольной сумме
+			require.Equal(t, outputSum, referenceSum, "File checksums do not match")
+
+			// Получаем размер выходного файла
+			output, outputSize, errOutputSize := getReadFileAndHimSize(tc.input.to)
+			defer closeFile(output)
+
+			require.NoError(t, errOutputSize)
+			require.NotEqual(t, outputSize, 0)
+
+			// Получаем размер эталонного файла
+			reference, referenceSize, errReferenceSize := getReadFileAndHimSize(tc.input.reference)
+			defer closeFile(reference)
+
+			require.NoError(t, errReferenceSize)
+			require.NotEqual(t, referenceSize, 0)
+
+			// Проверяем соответствие между выходным и эталонным файлом по размеру файлов
+			require.Equal(t, outputSize, referenceSize, "File sizes do not match")
 		})
 	}
-*/
-func TestCopy(t *testing.T) {
-	fileInput := "./testdata/input.txt"
-	fileOutput := "./testdata/test.txt"
+}
 
-	/*t.Run("case custom copy success", func(t *testing.T) {
-		res := Copy("./testdata/1.txt", fileOutput, 3, 1)
+// Тест для проверки конкретных ошибок.
+func TestNegativeCopy(t *testing.T) {
+	tests := []struct {
+		name  string
+		err   error
+		input InputData
+	}{
+		{
+			name: "from path file does not exists", err: ErrFromPathDoesNotExists,
+			input: InputData{},
+		},
+		{
+			name: "to path file does not exists", err: ErrToPathDoesNotExists,
+			input: InputData{from: inputPath},
+		},
+		{
+			name: "unsupported file", err: ErrUnsupportedFile,
+			input: InputData{from: "/dev/urandom", to: outputPath},
+		},
+		{
+			name: "offset exceeds file size", err: ErrOffsetExceedsFileSize,
+			input: InputData{from: inputPath, to: outputPath, offset: 7000, limit: 0},
+		},
+	}
 
-		file, _ := os.Open(fileOutput)
-		content, _ := io.ReadAll(file)
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			err := Copy(tc.input.from, tc.input.to, tc.input.offset, tc.input.limit)
+			require.ErrorIs(t, err, tc.err)
+		})
+	}
+}
 
-		defer func() {
-			file.Close()
-			os.Remove(fileOutput)
-		}()
-
-		require.Nil(t, res)
-		require.Equal(t, "s", string(content))
-	})*/
-
-	t.Run("case offset=0 limit=0", func(t *testing.T) {
-		res := Copy(fileInput, fileOutput, 0, 0)
-
-		fileOut, _ := os.Open(fileOutput)
-		contentOut, _ := io.ReadAll(fileOut)
-
-		fileMatch, _ := os.Open("./testdata/out_offset0_limit0.txt")
-		contentMatch, _ := io.ReadAll(fileMatch)
-
-		defer func() {
-			fileOut.Close()
-			fileMatch.Close()
-			os.Remove(fileOutput)
-		}()
-
-		require.Nil(t, res)
-		require.Equal(t, string(contentMatch), string(contentOut))
+// Тест на отсутствие файлов.
+func TestDoesNotExistsFile(t *testing.T) {
+	t.Run("does not input file", func(t *testing.T) {
+		notInputPath := "testdata/not_input.txt"
+		input := InputData{from: notInputPath, to: outputPath, offset: 100, limit: 2000}
+		err := Copy(input.from, input.to, input.offset, input.limit)
+		require.Error(t, err)
 	})
 
-	t.Run("case offset=0 limit=10", func(t *testing.T) {
-		res := Copy(fileInput, fileOutput, 0, 10)
-
-		fileOut, _ := os.Open(fileOutput)
-		contentOut, _ := io.ReadAll(fileOut)
-
-		fileMatch, _ := os.Open("./testdata/out_offset0_limit10.txt")
-		contentMatch, _ := io.ReadAll(fileMatch)
-
-		defer func() {
-			fileOut.Close()
-			fileMatch.Close()
-			os.Remove(fileOutput)
-		}()
-
-		require.Nil(t, res)
-		require.Equal(t, string(contentMatch), string(contentOut))
+	t.Run("does not output file", func(t *testing.T) {
+		notOutputPath := "./test/out.txt"
+		input := InputData{from: inputPath, to: notOutputPath, offset: 1000, limit: 2000}
+		err := Copy(input.from, input.to, input.offset, input.limit)
+		require.Error(t, err)
 	})
+}
 
-	t.Run("case offset=0 limit=1000", func(t *testing.T) {
-		res := Copy(fileInput, fileOutput, 0, 1000)
+// Получить контрольную сумму файла.
+func getMd5Sum(filePath string) (string, error) {
+	file, errFile := os.Open(filePath)
+	if errFile != nil {
+		return "", errFile
+	}
 
-		fileOut, _ := os.Open(fileOutput)
-		contentOut, _ := io.ReadAll(fileOut)
+	fileSum := md5.New()
+	_, errSum := io.Copy(fileSum, file)
+	if errSum != nil {
+		return "", errSum
+	}
 
-		fileMatch, _ := os.Open("./testdata/out_offset0_limit1000.txt")
-		contentMatch, _ := io.ReadAll(fileMatch)
-
-		defer func() {
-			fileOut.Close()
-			fileMatch.Close()
-			os.Remove(fileOutput)
-		}()
-
-		require.Nil(t, res)
-		require.Equal(t, string(contentMatch), string(contentOut))
-	})
-
-	t.Run("case offset=0 limit=10000", func(t *testing.T) {
-		res := Copy(fileInput, fileOutput, 0, 10000)
-
-		fileOut, _ := os.Open(fileOutput)
-		contentOut, _ := io.ReadAll(fileOut)
-
-		fileMatch, _ := os.Open("./testdata/out_offset0_limit10000.txt")
-		contentMatch, _ := io.ReadAll(fileMatch)
-
-		defer func() {
-			fileOut.Close()
-			fileMatch.Close()
-			os.Remove(fileOutput)
-		}()
-
-		require.Nil(t, res)
-		require.Equal(t, string(contentMatch), string(contentOut))
-	})
-
-	t.Run("case offset=100 limit=1000", func(t *testing.T) {
-		res := Copy(fileInput, fileOutput, 100, 1000)
-
-		fileOut, _ := os.Open(fileOutput)
-		contentOut, _ := io.ReadAll(fileOut)
-
-		fileMatch, _ := os.Open("./testdata/out_offset100_limit1000.txt")
-		contentMatch, _ := io.ReadAll(fileMatch)
-
-		defer func() {
-			fileOut.Close()
-			fileMatch.Close()
-			os.Remove(fileOutput)
-		}()
-
-		require.Nil(t, res)
-		require.Equal(t, string(contentMatch), string(contentOut))
-	})
-
-	t.Run("case offset=6000 limit=1000", func(t *testing.T) {
-		res := Copy(fileInput, fileOutput, 6000, 1000)
-
-		fileOut, _ := os.Open(fileOutput)
-		contentOut, _ := io.ReadAll(fileOut)
-
-		fileMatch, _ := os.Open("./testdata/out_offset6000_limit1000.txt")
-		contentMatch, _ := io.ReadAll(fileMatch)
-
-		defer func() {
-			fileOut.Close()
-			fileMatch.Close()
-			os.Remove(fileOutput)
-		}()
-
-		require.Nil(t, res)
-		require.Equal(t, string(contentMatch), string(contentOut))
-	})
+	return fmt.Sprintf("%X", fileSum.Sum(nil)), nil
 }
