@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 
@@ -54,7 +55,8 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 			return ErrCreateFile
 		}
 
-		for skippedCount <= offset {
+		for skippedCount < offset {
+			fmt.Println(skippedCount)
 			if offset < int64(bufferSize) {
 				readLen = offset
 			} else {
@@ -66,7 +68,6 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 
 			skippedCount += readLen
 		}
-
 		writeFile.Close()
 	}
 
