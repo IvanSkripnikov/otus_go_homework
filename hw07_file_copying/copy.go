@@ -63,9 +63,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 			if skippedCount+readLen > offset {
 				readLen = offset - skippedCount
 			}
-			if _, err := io.CopyN(writeFile, readFile, readLen); err != nil {
-				break
-			}
+			io.CopyN(writeFile, readFile, readLen)
 
 			skippedCount += readLen
 
@@ -86,8 +84,9 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		readLen = int64(bufferSize)
 	}
 	for completeHandleCount < limit {
-		if _, err := io.CopyN(writeFile, readFile, readLen); err != nil {
-			break
+		_, err := io.CopyN(writeFile, readFile, readLen)
+		if err != nil {
+			return err
 		}
 
 		completeHandleCount += readLen
@@ -98,8 +97,14 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 
 	// закрываем файл с которыми работали
 	defer func() {
-		writeFile.Close()
-		readFile.Close()
+		err := writeFile.Close()
+		if err != nil {
+			return
+		}
+		err = readFile.Close()
+		if err != nil {
+			return
+		}
 	}()
 
 	return nil
