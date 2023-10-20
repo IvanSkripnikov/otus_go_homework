@@ -2,9 +2,10 @@ package main
 
 import (
 	"errors"
-	"github.com/cheggaaa/pb/v3"
 	"io"
 	"os"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -28,7 +29,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return ErrOffsetExceedsFileSize
 	}
 
-	if limit > fileSize {
+	if limit > fileSize || limit == 0 {
 		limit = fileSize
 	}
 
@@ -85,7 +86,6 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		}
 
 		completeHandleCount += readLen
-		//fmt.Println(completeHandleCount, limit, fileSize, readLen)
 	}
 
 	// закрываем файл с которыми работали
