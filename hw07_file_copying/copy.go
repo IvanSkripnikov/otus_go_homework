@@ -4,9 +4,10 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/cheggaaa/pb/v3"
 	"log"
 	"os"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
