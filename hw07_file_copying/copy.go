@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
-	ErrOpenFile              = errors.New("can't open file")
-	ErrCreateFile            = errors.New("can't create file")
+	ErrOffsetExceedsFileSize       = errors.New("offset exceeds file size")
+	ErrOpenFile                    = errors.New("can't open file")
+	ErrCreateFile                  = errors.New("can't create file")
+	bufferSize               int64 = 1024
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
@@ -33,8 +34,6 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		limit = fileSize
 	}
 
-	bufferSize := 1024
-
 	// Настраиваем прогресс бар
 	progressCounts := getProgressBarLimit(fileSize, offset)
 
@@ -45,33 +44,13 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	var (
 		completeHandleCount int64
 		readLen             int64
-		skippedCount        int64
 	)
 
 	if offset > 0 {
-		writeFile, errWrite := os.OpenFile(toPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
-		if errWrite != nil {
-			return ErrCreateFile
+		rewind := rewindOffset(*readFile, toPath, bar)
+		if rewind != nil {
+			return rewind
 		}
-
-		if offset < int64(bufferSize) {
-			readLen = offset
-		} else {
-			readLen = int64(bufferSize)
-		}
-
-		for skippedCount < offset {
-			if skippedCount+readLen > offset {
-				readLen = offset - skippedCount
-			}
-
-			if _, err := io.CopyN(writeFile, readFile, readLen); err != nil {
-				break
-			}
-
-			skippedCount += readLen
-		}
-		writeFile.Close()
 	}
 
 	writeFile, errWrite := os.OpenFile(toPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
@@ -79,17 +58,20 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return ErrCreateFile
 	}
 
+	if limit < bufferSize {
+		readLen = limit
+	} else {
+		readLen = bufferSize
+	}
 	for completeHandleCount < limit {
-		if limit < int64(bufferSize) {
-			readLen = limit
-		} else {
-			readLen = int64(bufferSize)
-		}
 		if _, err := io.CopyN(writeFile, readFile, readLen); err != nil {
 			break
 		}
 
 		completeHandleCount += readLen
+
+		// инкерментим прогрессбар
+		bar.Add(int(readLen))
 	}
 
 	// закрываем файл с которыми работали
@@ -109,4 +91,40 @@ func getProgressBarLimit(inputFileSize, offset int64) int {
 	}
 
 	return progressCounts
+}
+
+func rewindOffset(readFile os.File, toPath string, bar *pb.ProgressBar) error {
+	var (
+		readLen      int64
+		skippedCount int64
+	)
+
+	writeFile, errWrite := os.OpenFile(toPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
+	if errWrite != nil {
+		return ErrCreateFile
+	}
+
+	if offset < bufferSize {
+		readLen = offset
+	} else {
+		readLen = bufferSize
+	}
+
+	for skippedCount < offset {
+		if skippedCount+readLen > offset {
+			readLen = offset - skippedCount
+		}
+
+		if _, err := io.CopyN(writeFile, &readFile, readLen); err != nil {
+			break
+		}
+
+		skippedCount += readLen
+
+		// инкерментим прогрессбар
+		bar.Add(int(readLen))
+	}
+	writeFile.Close()
+
+	return nil
 }
