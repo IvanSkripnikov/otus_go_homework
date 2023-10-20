@@ -4,26 +4,18 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/cheggaaa/pb/v3"
 	"log"
 	"os"
-	"path/filepath"
-
-	"github.com/cheggaaa/pb/v3"
 )
 
 var (
-	ErrUnsupportedFile       = errors.New("unsupported file")
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
 	ErrOpenFile              = errors.New("can't open file")
 	ErrCreateFile            = errors.New("can't create file")
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error { // мы заранее знаем сколько хотим прочитать
-	extension := filepath.Ext(fromPath)
-	// роверяем на допустимое расширение
-	if extension != ".txt" {
-		return ErrUnsupportedFile
-	}
 	// открываем файл
 	readFile, errOpen := os.Open(fromPath)
 	if errOpen != nil {

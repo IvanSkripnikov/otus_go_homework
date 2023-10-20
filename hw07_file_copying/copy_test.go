@@ -21,11 +21,6 @@ func TestCopyErrors(t *testing.T) {
 		err := Copy("./testdata/1.txt", fileOutput, 50, 0)
 		require.Truef(t, errors.Is(err, ErrOffsetExceedsFileSize), "actual error %q", err)
 	})
-
-	t.Run("case error ErrUnsupportedFile", func(t *testing.T) {
-		err := Copy("./testdata/image.png", fileOutput, 0, 10)
-		require.Truef(t, errors.Is(err, ErrUnsupportedFile), "actual error %q", err)
-	})
 }
 
 func TestCopy(t *testing.T) {
