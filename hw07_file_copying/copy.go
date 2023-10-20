@@ -85,7 +85,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	}
 	for completeHandleCount < limit {
 		_, err := io.CopyN(writeFile, readFile, readLen)
-		if err != nil {
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 
