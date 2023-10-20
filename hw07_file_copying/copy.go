@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"os"
 
@@ -55,12 +54,14 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 			return ErrCreateFile
 		}
 
+		if offset < int64(bufferSize) {
+			readLen = offset
+		} else {
+			readLen = int64(bufferSize)
+		}
 		for skippedCount < offset {
-			fmt.Println(skippedCount)
-			if offset < int64(bufferSize) {
-				readLen = offset
-			} else {
-				readLen = int64(bufferSize)
+			if skippedCount+readLen > offset {
+				readLen = offset - skippedCount
 			}
 			if _, err := io.CopyN(writeFile, readFile, readLen); err != nil {
 				break
@@ -79,12 +80,12 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return ErrCreateFile
 	}
 
+	if limit < int64(bufferSize) {
+		readLen = limit
+	} else {
+		readLen = int64(bufferSize)
+	}
 	for completeHandleCount < limit {
-		if limit < int64(bufferSize) {
-			readLen = limit
-		} else {
-			readLen = int64(bufferSize)
-		}
 		if _, err := io.CopyN(writeFile, readFile, readLen); err != nil {
 			break
 		}
