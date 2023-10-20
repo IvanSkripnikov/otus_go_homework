@@ -61,7 +61,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error { // мы зара
 		// Если прочитали меньше чем ожидалось, то уменьшаем размер буфера
 		case read < bufferSize:
 			buffer = buffer[:read]
-			// buffer = buffer[offset : offset+limit]
+			buffer = buffer[offset : offset+limit]
 			hasEndWrite = true
 
 		// Если заданый лимит меньше чем прочитаная часть данных, то уменьшаем размер буфера
