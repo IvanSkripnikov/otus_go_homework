@@ -73,10 +73,8 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 			}
 			writeFile.Close()
 		*/
-		_, err := readFile.Seek(offset, int(limit))
-		if err != nil && !errors.Is(err, io.EOF) {
-			return err
-		}
+		readFile.Seek(offset, int(limit))
+
 	}
 
 	writeFile, errWrite := os.OpenFile(toPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
