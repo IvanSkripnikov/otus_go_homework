@@ -74,7 +74,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 			writeFile.Close()
 		*/
 		_, err := readFile.Seek(offset, int(limit))
-		if err != nil {
+		if err != nil && !errors.Is(err, io.EOF) {
 			return err
 		}
 	}
