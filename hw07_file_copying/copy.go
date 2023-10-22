@@ -95,6 +95,8 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		bar.Add(int(readLen))
 	}
 
+	bar.Add(int(bar.Total() - bar.Current()))
+
 	// закрываем файл с которыми работали
 	defer func() {
 		err := writeFile.Close()
