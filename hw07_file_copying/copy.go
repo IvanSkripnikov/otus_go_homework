@@ -45,32 +45,38 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	var (
 		completeHandleCount int64
 		readLen             int64
-		skippedCount        int64
+		// skippedCount        int64
 	)
 
 	if offset > 0 {
-		writeFile, errWrite := os.OpenFile(toPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
-		if errWrite != nil {
-			return ErrCreateFile
-		}
-
-		if offset < int64(bufferSize) {
-			readLen = offset
-		} else {
-			readLen = int64(bufferSize)
-		}
-		for skippedCount < offset {
-			if skippedCount+readLen > offset {
-				readLen = offset - skippedCount
+		/*
+			writeFile, errWrite := os.OpenFile(toPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
+			if errWrite != nil {
+				return ErrCreateFile
 			}
-			io.CopyN(writeFile, readFile, readLen)
 
-			skippedCount += readLen
+			if offset < int64(bufferSize) {
+				readLen = offset
+			} else {
+				readLen = int64(bufferSize)
+			}
+			for skippedCount < offset {
+				if skippedCount+readLen > offset {
+					readLen = offset - skippedCount
+				}
+				io.CopyN(writeFile, readFile, readLen)
 
-			// инкерментим прогрессбар
-			bar.Add(int(readLen))
+				skippedCount += readLen
+
+				// инкерментим прогрессбар
+				bar.Add(int(readLen))
+			}
+			writeFile.Close()
+		*/
+		_, err := readFile.Seek(offset, int(limit))
+		if err != nil {
+			return err
 		}
-		writeFile.Close()
 	}
 
 	writeFile, errWrite := os.OpenFile(toPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
