@@ -49,30 +49,6 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	)
 
 	if offset > 0 {
-		/*
-			writeFile, errWrite := os.OpenFile(toPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, os.ModePerm)
-			if errWrite != nil {
-				return ErrCreateFile
-			}
-
-			if offset < int64(bufferSize) {
-				readLen = offset
-			} else {
-				readLen = int64(bufferSize)
-			}
-			for skippedCount < offset {
-				if skippedCount+readLen > offset {
-					readLen = offset - skippedCount
-				}
-				io.CopyN(writeFile, readFile, readLen)
-
-				skippedCount += readLen
-
-				// инкерментим прогрессбар
-				bar.Add(int(readLen))
-			}
-			writeFile.Close()
-		*/
 		_, err := readFile.Seek(offset, io.SeekStart)
 		if err != nil && !errors.Is(err, io.EOF) {
 			return err
