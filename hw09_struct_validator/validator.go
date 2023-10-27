@@ -37,11 +37,12 @@ func Validate(v interface{}) error {
 type UserRole1 string
 
 type User1 struct {
-	ID    string `json:"id" validate:"len:36"`
-	Name  string
-	Age   int       `validate:"min:18|max:50"`
-	Email string    `validate:"regexp:^\\w+@\\w+\\.\\w+$"`
-	Role  UserRole1 `validate:"in:admin,stuff"`
+	ID     string `json:"id" validate:"len:36"`
+	Name   string
+	Age    int       `validate:"min:18|max:50"`
+	Email  string    `validate:"regexp:^\\w+@\\w+\\.\\w+$"`
+	Role   UserRole1 `validate:"in:admin,stuff"`
+	Phones []string  `validate:"len:11"`
 }
 
 func main() {
@@ -65,10 +66,14 @@ func main() {
 			check = strings.Split(metaData[j], ":")
 			obj := getFuncFromValidator(check[0])
 			f, _ := obj.(func(reflect.Value, interface{}) interface{})
+
+			getValuesFromReflectValue(reflect.ValueOf(&user).Elem().FieldByName(fieldName))
+
 			value = reflect.ValueOf(&user).Elem().FieldByName(fieldName)
-			fmt.Println("params", check[0], check[1], value)
 			r := f(value, check[1])
-			fmt.Println("result:", r)
+			if r != nil {
+				validateErrors = append(validateErrors, r.(error))
+			}
 		}
 	}
 	fmt.Println(validateErrors)
@@ -133,17 +138,27 @@ func getFuncFromValidator(name string) interface{} {
 		}
 	case "len":
 		return func(v reflect.Value, length interface{}) interface{} {
-			val := v.Interface()
-			value := val.(string)
-
 			lenValue := length.(string)
 			lenValueInt, errConvert := strconv.Atoi(lenValue)
 			if errConvert != nil {
 				return errConvert
 			}
-			if len(value) > lenValueInt || len(value) < lenValueInt {
-				return ErrMismatchedLength
+
+			val := v.Interface()
+			if v.Kind() == reflect.Slice {
+				valueSlice := val.([]string)
+				for _, value := range valueSlice {
+					if len(value) > lenValueInt || len(value) < lenValueInt {
+						return ErrMismatchedLength
+					}
+				}
+			} else {
+				value := val.(string)
+				if len(value) > lenValueInt || len(value) < lenValueInt {
+					return ErrMismatchedLength
+				}
 			}
+
 			return nil
 		}
 	case "in":
@@ -173,4 +188,26 @@ func inArray(val string, array []string) bool {
 	}
 
 	return false
+}
+
+func getValuesFromReflectValue(v reflect.Value) []string {
+	val := v.Interface()
+	switch v.Kind() {
+	case reflect.Slice:
+		return val.([]string)
+	case reflect.Array:
+		return val.([]string)
+	default:
+		fmt.Println(v.Kind(), v.Type(), val)
+		var value = make([]string, 1)
+		if v.Kind() == reflect.Int {
+			value[0] = strconv.Itoa(val.(int))
+		} else {
+			if v.Type() == reflect.TypeOf(v) {
+				value[0] = val.(string)
+			}
+		}
+
+		return value
+	}
 }
