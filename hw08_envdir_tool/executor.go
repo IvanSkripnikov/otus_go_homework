@@ -8,22 +8,24 @@ import (
 )
 
 // RunCmd runs a command + arguments (cmd) with environment variables from env.
-func RunCmd(cmd []string, env Environment) int {
+func RunCmd(cmd []string, env Environment) (returnCode int) {
+	returnCode = 0
 	if len(cmd) <= 1 {
-		return 0
+		return returnCode
 	}
 
 	command := exec.Command(cmd[0], cmd[1:]...) // #nosec G204
-	command.Env = makeEnv(env)
 	command.Stdin = os.Stdin
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
+	command.Env = makeEnv(env)
 
 	if err := command.Run(); err != nil {
 		log.Printf("Error: %v", err)
 	}
+	returnCode = command.ProcessState.ExitCode()
 
-	return command.ProcessState.ExitCode()
+	return
 }
 
 func makeEnv(env Environment) []string {
