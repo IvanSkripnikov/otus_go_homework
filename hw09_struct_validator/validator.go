@@ -67,8 +67,8 @@ func main() {
 			obj := getFuncFromValidator(check[0])
 			f, _ := obj.(func(reflect.Value, interface{}) interface{})
 
-			getValuesFromReflectValue(reflect.ValueOf(&user).Elem().FieldByName(fieldName))
-
+			z := getValuesFromReflectValue(reflect.ValueOf(&user).Elem().FieldByName(fieldName))
+			fmt.Println(z, "---")
 			value = reflect.ValueOf(&user).Elem().FieldByName(fieldName)
 			r := f(value, check[1])
 			if r != nil {
@@ -198,14 +198,11 @@ func getValuesFromReflectValue(v reflect.Value) []string {
 	case reflect.Array:
 		return val.([]string)
 	default:
-		fmt.Println(v.Kind(), v.Type(), val)
 		var value = make([]string, 1)
 		if v.Kind() == reflect.Int {
 			value[0] = strconv.Itoa(val.(int))
 		} else {
-			if v.Type() == reflect.TypeOf(v) {
-				value[0] = val.(string)
-			}
+			value[0] = v.String()
 		}
 
 		return value
