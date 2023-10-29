@@ -16,6 +16,7 @@ var (
 	ErrMismatchedLength = errors.New("Value is not mathing length")
 	ErrNotInList        = errors.New("Value is not in list")
 	ErrUnknownCheck     = errors.New("Unknown check for value")
+	ErrIsEmpty          = errors.New("Value is empty")
 )
 
 type ValidationError struct {
@@ -63,14 +64,18 @@ func main() {
 			continue
 		}
 		for j := 0; j < len(metaData); j++ {
+			value = reflect.ValueOf(&user).Elem().FieldByName(fieldName)
+
+			if reflect.ValueOf(user).FieldByName(fieldName).IsZero() {
+				validateErrors = append(validateErrors, ErrIsEmpty)
+				continue
+			}
+
 			check = strings.Split(metaData[j], ":")
 			obj := getFuncFromValidator(check[0])
-			f, _ := obj.(func(reflect.Value, interface{}) interface{})
-
-			z := getValuesFromReflectValue(reflect.ValueOf(&user).Elem().FieldByName(fieldName))
-			fmt.Println(z, "---")
-			value = reflect.ValueOf(&user).Elem().FieldByName(fieldName)
-			r := f(value, check[1])
+			f, _ := obj.(func(string, interface{}) interface{})
+			z := getValuesFromReflectValue(value)
+			r := f(z[0], check[1])
 			if r != nil {
 				validateErrors = append(validateErrors, r.(error))
 			}
@@ -90,9 +95,8 @@ func getMetaData(field reflect.StructField) []string {
 func getFuncFromValidator(name string) interface{} {
 	switch name {
 	case "min":
-		return func(v reflect.Value, min interface{}) interface{} {
-			val := v.Interface()
-			value := val.(int)
+		return func(v string, min interface{}) interface{} {
+			value, _ := strconv.Atoi(v)
 
 			minValue := min.(string)
 			minValueInt, errConvert := strconv.Atoi(minValue)
@@ -106,9 +110,8 @@ func getFuncFromValidator(name string) interface{} {
 			return nil
 		}
 	case "max":
-		return func(v reflect.Value, max interface{}) interface{} {
-			val := v.Interface()
-			value := val.(int)
+		return func(v string, max interface{}) interface{} {
+			value, _ := strconv.Atoi(v)
 
 			maxValue := max.(string)
 			maxValueInt, errConvert := strconv.Atoi(maxValue)
@@ -122,12 +125,9 @@ func getFuncFromValidator(name string) interface{} {
 			return nil
 		}
 	case "regexp":
-		return func(v reflect.Value, pattern interface{}) interface{} {
-			val := v.Interface()
-			value := val.(string)
-
+		return func(v string, pattern interface{}) interface{} {
 			valPattern := pattern.(string)
-			matched, err := regexp.MatchString(valPattern, value)
+			matched, err := regexp.MatchString(valPattern, v)
 			if err != nil {
 				return err
 			}
@@ -137,40 +137,26 @@ func getFuncFromValidator(name string) interface{} {
 			return nil
 		}
 	case "len":
-		return func(v reflect.Value, length interface{}) interface{} {
+		return func(v string, length interface{}) interface{} {
 			lenValue := length.(string)
 			lenValueInt, errConvert := strconv.Atoi(lenValue)
 			if errConvert != nil {
 				return errConvert
 			}
 
-			val := v.Interface()
-			if v.Kind() == reflect.Slice {
-				valueSlice := val.([]string)
-				for _, value := range valueSlice {
-					if len(value) > lenValueInt || len(value) < lenValueInt {
-						return ErrMismatchedLength
-					}
-				}
-			} else {
-				value := val.(string)
-				if len(value) > lenValueInt || len(value) < lenValueInt {
-					return ErrMismatchedLength
-				}
+			value, _ := strconv.Atoi(v)
+			if value > lenValueInt || value < lenValueInt {
+				return ErrMismatchedLength
 			}
 
 			return nil
 		}
 	case "in":
-		return func(v reflect.Value, in interface{}) interface{} {
-			val := v.Interface()
-			value := val.(UserRole1)
-			valueStr := string(value)
-
+		return func(v string, in interface{}) interface{} {
 			valInString := in.(string)
 			valInArray := strings.Split(valInString, ",")
 
-			if !inArray(valueStr, valInArray) {
+			if !inArray(v, valInArray) {
 				return ErrNotInList
 			}
 			return nil
