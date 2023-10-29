@@ -7,8 +7,8 @@ import (
 )
 
 func TestRunCmd(t *testing.T) {
-	var commands1 = []string{"ls", "-la", "/var"}
-	var commands2 = []string{"ls", "-la", "/root"}
+	commands1 := []string{"ls", "-la", "/var"}
+	commands2 := []string{"ls", "-la", "/root"}
 
 	envs, err := ReadDir("./testdata/env")
 	if err != nil {
