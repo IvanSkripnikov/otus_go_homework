@@ -31,7 +31,7 @@ func ReadDir(dir string) (Environment, error) {
 	envs := make(Environment, len(files))
 
 	for _, file := range files {
-		if canSkipObject(file, &envs) {
+		if canSkipObject(file) {
 			continue
 		}
 		envVarName := file.Name()
@@ -82,7 +82,7 @@ func removeEnvVar(key string) {
 	}
 }
 
-func canSkipObject(file os.DirEntry, envs *Environment) bool {
+func canSkipObject(file os.DirEntry) bool {
 	result := false
 	envVarName := file.Name()
 
