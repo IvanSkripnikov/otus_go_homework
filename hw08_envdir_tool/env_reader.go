@@ -36,6 +36,20 @@ func ReadDir(dir string) (Environment, error) {
 		}
 		envVarName := file.Name()
 
+		// если не можем получить данных по файлу - пропускаем
+		info, errInfo := file.Info()
+		if errInfo != nil {
+			log.Printf("Can't get file info: %s, error: %v \n", envVarName, errInfo)
+			continue
+		}
+
+		// если файл пуст - пропускаем, и удаляем переменную
+		if info.Size() == 0 {
+			envs[envVarName] = EnvValue{NeedRemove: true}
+			removeEnvVar(envVarName)
+			continue
+		}
+
 		// получаем данные
 		data, errData := os.ReadFile(dir + "/" + envVarName)
 		if errData != nil {
@@ -49,7 +63,7 @@ func ReadDir(dir string) (Environment, error) {
 		// в первой строке заменяем нули на перенос строки
 		firstLine := bytes.ReplaceAll(lines[0], zero, nl)
 
-		// убираем пробельные символы с краёв строки
+		// убираем пробельные символы и табуляцию с краёв строки
 		envValue := trim(firstLine)
 
 		// если такая переменная установлена - удаляем
@@ -74,20 +88,6 @@ func canSkipObject(file os.DirEntry, envs *Environment) bool {
 
 	// если текущий объект директория или название содержит =, пропускаем
 	if file.IsDir() || strings.Contains(envVarName, "=") {
-		result = true
-	}
-
-	// если не можем получить данных по файлу - пропускаем
-	info, errInfo := file.Info()
-	if errInfo != nil {
-		log.Printf("Can't get file info: %s, error: %v \n", envVarName, errInfo)
-		result = true
-	}
-
-	// если файл пуст - пропускаем, и удаляем переменную
-	if info.Size() == 0 {
-		(*envs)[envVarName] = EnvValue{NeedRemove: true}
-		removeEnvVar(envVarName)
 		result = true
 	}
 
