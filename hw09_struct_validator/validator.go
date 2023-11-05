@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -17,6 +16,7 @@ var (
 	ErrNotInList        = errors.New("Value is not in list")
 	ErrUnknownCheck     = errors.New("Unknown check for value")
 	ErrIsEmpty          = errors.New("Value is empty")
+	ErrIsNotStructure   = errors.New("Value is not structure")
 )
 
 type ValidationError struct {
@@ -32,27 +32,33 @@ func (v ValidationErrors) Error() string {
 
 func Validate(v interface{}) error {
 	t := reflect.TypeOf(v)
-	var (
-		metaData       []string
-		check          []string
-		fieldName      string
-		validateErrors []error
-		value          reflect.Value
-	)
-	for i := 0; i < t.NumField(); i++ {
-		fieldName = t.Field(i).Name
+
+	if t.Kind() != reflect.Struct {
+		return ErrIsNotStructure
+	}
+
+	itemValue := reflect.ValueOf(v)
+	numFields := t.NumField()
+
+	for i := 0; i < numFields; i++ {
+		fieldType := t.Field(i)
+		value := itemValue.Field(i)
+
+		// Проверяем является ли поле публичным
+		if !fieldType.IsExported() {
+			continue
+		}
+
+		var metaData []string
+		var validateErrors []error
+		var check []string
+
 		metaData = getMetaData(t.Field(i))
 		if metaData == nil {
 			continue
 		}
+
 		for j := 0; j < len(metaData); j++ {
-			value = reflect.ValueOf(&v).Elem().FieldByName(fieldName)
-
-			if reflect.ValueOf(v).FieldByName(fieldName).IsZero() {
-				validateErrors = append(validateErrors, ErrIsEmpty)
-				continue
-			}
-
 			check = strings.Split(metaData[j], ":")
 			obj := getFuncFromValidator(check[0])
 			f, _ := obj.(func(string, interface{}) interface{})
@@ -63,7 +69,6 @@ func Validate(v interface{}) error {
 			}
 		}
 	}
-	fmt.Println(validateErrors)
 
 	return nil
 }
