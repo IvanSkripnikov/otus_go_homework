@@ -9,14 +9,14 @@ import (
 )
 
 var (
-	ErrLessThanMin      = errors.New("Value is less than min")
-	ErrMoreThanMax      = errors.New("Value is more than max")
-	ErrMismatchedRegexp = errors.New("Value is not mathing regexp")
-	ErrMismatchedLength = errors.New("Value is not mathing length")
-	ErrNotInList        = errors.New("Value is not in list")
-	ErrUnknownCheck     = errors.New("Unknown check for value")
-	ErrIsEmpty          = errors.New("Value is empty")
-	ErrIsNotStructure   = errors.New("Value is not structure")
+	ErrLessThanMin      = errors.New("value is less than min")
+	ErrMoreThanMax      = errors.New("value is more than max")
+	ErrMismatchedRegexp = errors.New("value is not mathing regexp")
+	ErrMismatchedLength = errors.New("value is not mathing length")
+	ErrNotInList        = errors.New("value is not in list")
+	ErrUnknownCheck     = errors.New("unknown check for value")
+	ErrIsEmpty          = errors.New("value is empty")
+	ErrIsNotStructure   = errors.New("value is not structure")
 )
 
 type ValidationError struct {
@@ -37,6 +37,12 @@ func Validate(v interface{}) error {
 		return ErrIsNotStructure
 	}
 
+	var (
+		metaData       []string
+		validateErrors []error
+		check          []string
+	)
+
 	itemValue := reflect.ValueOf(v)
 	numFields := t.NumField()
 
@@ -48,10 +54,6 @@ func Validate(v interface{}) error {
 		if !fieldType.IsExported() {
 			continue
 		}
-
-		var metaData []string
-		var validateErrors []error
-		var check []string
 
 		metaData = getMetaData(t.Field(i))
 		if metaData == nil {
@@ -68,6 +70,10 @@ func Validate(v interface{}) error {
 				validateErrors = append(validateErrors, r.(error))
 			}
 		}
+	}
+
+	if len(validateErrors) > 0 {
+		// return validateErrors[0]
 	}
 
 	return nil
@@ -173,7 +179,7 @@ func getValuesFromReflectValue(v reflect.Value) []string {
 	case reflect.Array:
 		return val.([]string)
 	default:
-		var value = make([]string, 1)
+		value := make([]string, 1)
 		if v.Kind() == reflect.Int {
 			value[0] = strconv.Itoa(val.(int))
 		} else {
