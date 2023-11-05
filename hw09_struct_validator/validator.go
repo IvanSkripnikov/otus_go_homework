@@ -31,25 +31,7 @@ func (v ValidationErrors) Error() string {
 }
 
 func Validate(v interface{}) error {
-	// Place your code here.
-	return nil
-}
-
-type UserRole1 string
-
-type User1 struct {
-	ID     string `json:"id" validate:"len:36"`
-	Name   string
-	Age    int       `validate:"min:18|max:50"`
-	Email  string    `validate:"regexp:^\\w+@\\w+\\.\\w+$"`
-	Role   UserRole1 `validate:"in:admin,stuff"`
-	Phones []string  `validate:"len:11"`
-}
-
-func main() {
-	user := User1{ID: "34242223", Name: "John", Age: 33, Email: "tramak@mail.ru", Role: "admin"}
-
-	t := reflect.TypeOf(user)
+	t := reflect.TypeOf(v)
 	var (
 		metaData       []string
 		check          []string
@@ -64,9 +46,9 @@ func main() {
 			continue
 		}
 		for j := 0; j < len(metaData); j++ {
-			value = reflect.ValueOf(&user).Elem().FieldByName(fieldName)
+			value = reflect.ValueOf(&v).Elem().FieldByName(fieldName)
 
-			if reflect.ValueOf(user).FieldByName(fieldName).IsZero() {
+			if reflect.ValueOf(v).FieldByName(fieldName).IsZero() {
 				validateErrors = append(validateErrors, ErrIsEmpty)
 				continue
 			}
@@ -82,6 +64,8 @@ func main() {
 		}
 	}
 	fmt.Println(validateErrors)
+
+	return nil
 }
 
 func getMetaData(field reflect.StructField) []string {
