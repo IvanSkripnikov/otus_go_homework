@@ -69,7 +69,7 @@ func TestValidate(t *testing.T) {
 				ValidationError{Field: "Email", Err: ErrMismatchedRegexp},
 				ValidationError{Field: "Role", Err: ErrNotInList},
 				ValidationError{Field: "Phones", Err: ErrMismatchedRegexp},
-				ValidationError{Field: "Phones", Err: ErrMismatchedRegexp},
+				ValidationError{Field: "Phones", Err: ErrMismatchedLength},
 			},
 		},
 		{

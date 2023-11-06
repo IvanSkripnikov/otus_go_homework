@@ -72,10 +72,12 @@ func Validate(v interface{}) error {
 			check = strings.Split(metaData[j], ":")
 			obj := getFuncFromValidator(check[0])
 			f, _ := obj.(func(string, interface{}) interface{})
-			z := getValuesFromReflectValue(value)
-			r := f(z[0], check[1])
-			if r != nil {
-				validateErrors = append(validateErrors, ValidationError{Field: fieldName, Err: r.(error)})
+			valArrayStrings := getValuesFromReflectValue(value)
+			for _, val := range valArrayStrings {
+				r := f(val, check[1])
+				if r != nil {
+					validateErrors = append(validateErrors, ValidationError{Field: fieldName, Err: r.(error)})
+				}
 			}
 		}
 	}
@@ -180,7 +182,7 @@ func inArray(val string, array []string) bool {
 
 func getValuesFromReflectValue(v reflect.Value) []string {
 	val := v.Interface()
-	switch v.Kind() {
+	switch v.Kind() { //nolint:exhaustive
 	case reflect.Slice:
 		return val.([]string)
 	case reflect.Array:
