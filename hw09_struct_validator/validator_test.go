@@ -65,7 +65,7 @@ func TestValidate(t *testing.T) {
 				Phones: []string{"7900123ab67", "790012345"},
 			},
 			expectedErr: ValidationErrors{
-				ValidationError{Field: "Age", Err: ErrLessThanMin},
+				ValidationError{Field: "Age", Err: ErrMoreThanMax},
 				ValidationError{Field: "Email", Err: ErrMismatchedRegexp},
 				ValidationError{Field: "Role", Err: ErrNotInList},
 				ValidationError{Field: "Phones", Err: ErrMismatchedRegexp},
@@ -82,7 +82,7 @@ func TestValidate(t *testing.T) {
 				Phones: []string{"79001234567", "27401234567"},
 			},
 			expectedErr: ValidationErrors{
-				ValidationError{Field: "ID", Err: ErrLessThanMin},
+				ValidationError{Field: "ID", Err: ErrMismatchedLength},
 				ValidationError{Field: "Age", Err: ErrLessThanMin},
 			},
 		},
@@ -95,7 +95,7 @@ func TestValidate(t *testing.T) {
 		{
 			in: App{},
 			expectedErr: ValidationErrors{
-				ValidationError{Field: "Version", Err: ErrLessThanMin},
+				ValidationError{Field: "Version", Err: ErrMismatchedLength},
 			},
 		},
 		{
@@ -103,7 +103,7 @@ func TestValidate(t *testing.T) {
 				Version: "1.1.3-rc.2",
 			},
 			expectedErr: ValidationErrors{
-				ValidationError{Field: "Version", Err: ErrLessThanMin},
+				ValidationError{Field: "Version", Err: ErrMismatchedLength},
 			},
 		},
 		{
@@ -127,7 +127,7 @@ func TestValidate(t *testing.T) {
 		{
 			in: Response{},
 			expectedErr: ValidationErrors{
-				ValidationError{Field: "Code", Err: ErrMismatchedLength},
+				ValidationError{Field: "Code", Err: ErrNotInList},
 			},
 		},
 		{
@@ -136,7 +136,7 @@ func TestValidate(t *testing.T) {
 				Body: "Out of range",
 			},
 			expectedErr: ValidationErrors{
-				ValidationError{Field: "Code", Err: ErrMismatchedLength},
+				ValidationError{Field: "Code", Err: ErrNotInList},
 			},
 		},
 	}

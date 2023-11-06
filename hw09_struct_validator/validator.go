@@ -16,7 +16,6 @@ var (
 	ErrMismatchedLength = errors.New("value is not mathing length")
 	ErrNotInList        = errors.New("value is not in list")
 	ErrUnknownCheck     = errors.New("unknown check for value")
-	ErrIsEmpty          = errors.New("value is empty")
 	ErrIsNotStructure   = errors.New("value is not structure")
 )
 
@@ -144,12 +143,11 @@ func getFuncFromValidator(name string) interface{} {
 		return func(v string, length interface{}) interface{} {
 			lenValue := length.(string)
 			lenValueInt, errConvert := strconv.Atoi(lenValue)
+
 			if errConvert != nil {
 				return errConvert
 			}
-
-			value, _ := strconv.Atoi(v)
-			if value > lenValueInt || value < lenValueInt {
+			if len(v) != lenValueInt {
 				return ErrMismatchedLength
 			}
 
