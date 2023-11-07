@@ -40,6 +40,7 @@ func (v ValidationErrors) Error() string {
 func Validate(v interface{}) error {
 	t := reflect.TypeOf(v)
 
+	// если это не структура - возвращаем ошибку
 	if t.Kind() != reflect.Struct {
 		return ErrIsNotStructure
 	}
@@ -53,26 +54,35 @@ func Validate(v interface{}) error {
 	numFields := t.NumField()
 	validateErrors := make([]ValidationError, 0, numFields)
 
+	// начинаем рассматривать поля
 	for i := 0; i < numFields; i++ {
 		fieldType := t.Field(i)
 		value := itemValue.Field(i)
 		fieldName := fieldType.Name
 
-		// Проверяем является ли поле публичным
+		// проверяем является ли поле публичным
 		if !fieldType.IsExported() {
 			continue
 		}
 
+		// если нет метаданных - пропускаем
 		metaData = getMetaData(t.Field(i))
 		if metaData == nil {
 			continue
 		}
 
 		for j := 0; j < len(metaData); j++ {
+			// для каждой из проверок находим её тип и значение, с которым сверять
 			check = strings.Split(metaData[j], ":")
+
+			// получаем обработчик по имени
 			obj := getFuncFromValidator(check[0])
 			f, _ := obj.(func(string, interface{}) interface{})
+
+			// приводим все параметры к единообразному виду
 			valArrayStrings := getValuesFromReflectValue(value)
+
+			// валидируем параметр
 			for _, val := range valArrayStrings {
 				r := f(val, check[1])
 				if r != nil {

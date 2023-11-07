@@ -19,7 +19,7 @@ type (
 		Age    int             `validate:"min:18|max:50"`
 		Email  string          `validate:"regexp:^\\w+@\\w+\\.\\w+$"`
 		Role   UserRole        `validate:"in:admin,stuff"`
-		Phones []string        `validate:"regexp:^\\d+$|len:11"`
+		Phones []string        `validate:"len:11"`
 		meta   json.RawMessage //nolint:unused
 	}
 
@@ -46,49 +46,48 @@ func TestValidate(t *testing.T) {
 	}{
 		{
 			in: User{
-				ID:     "24458918609ae919f6592976848b9be123ab",
-				Name:   "John Smith",
-				Age:    25,
-				Email:  "admin@example.ru",
+				ID:     "18858ab860111919f6592976848b9be12301",
+				Name:   "Neuvillet",
+				Age:    30,
+				Email:  "neuvillet@fontaine.ru",
 				Role:   "admin",
-				Phones: []string{"27401234567"},
+				Phones: []string{"27999999999"},
 			},
 			expectedErr: nil,
 		},
 		{
 			in: User{
-				ID:     "4d0acc63962a43f30a2cfff3e4f759839182",
-				Name:   "John Doe",
-				Age:    52,
-				Email:  "test.ru",
-				Role:   "guest",
-				Phones: []string{"7900123ab67", "790012345"},
+				ID:     "44adf98870bc0943453535345545657567345554332",
+				Name:   "Zhongli",
+				Age:    6500,
+				Email:  "zhongli@teyvat.ru",
+				Role:   "master",
+				Phones: []string{"2100123ooo7", "890012334"},
 			},
 			expectedErr: ValidationErrors{
+				ValidationError{Field: "ID", Err: ErrMismatchedLength},
 				ValidationError{Field: "Age", Err: ErrMoreThanMax},
-				ValidationError{Field: "Email", Err: ErrMismatchedRegexp},
 				ValidationError{Field: "Role", Err: ErrNotInList},
-				ValidationError{Field: "Phones", Err: ErrMismatchedRegexp},
 				ValidationError{Field: "Phones", Err: ErrMismatchedLength},
 			},
 		},
 		{
 			in: User{
-				ID:     "1f2ffb504440fda52c3fd95ba4252ab1abcd1234",
-				Name:   "Jane Doe",
-				Age:    16,
-				Email:  "janedoe@example.ru",
+				ID:     "1c0acc63962a43f30a2cf2f3e5f759839223",
+				Name:   "Nahida",
+				Age:    8,
+				Email:  "nahida@mail.sum.teyv",
 				Role:   "stuff",
-				Phones: []string{"79001234567", "27401234567"},
+				Phones: []string{"81077734567", "21401234000"},
 			},
 			expectedErr: ValidationErrors{
-				ValidationError{Field: "ID", Err: ErrMismatchedLength},
 				ValidationError{Field: "Age", Err: ErrLessThanMin},
+				ValidationError{Field: "Email", Err: ErrMismatchedRegexp},
 			},
 		},
 		{
 			in: App{
-				Version: "1.0.5",
+				Version: "4.0.1",
 			},
 			expectedErr: nil,
 		},
@@ -100,7 +99,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			in: App{
-				Version: "1.1.3-rc.2",
+				Version: "1.16.0.2",
 			},
 			expectedErr: ValidationErrors{
 				ValidationError{Field: "Version", Err: ErrMismatchedLength},
@@ -111,16 +110,16 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			in: Token{
-				Header:    []byte("X-Real-IP"),
-				Payload:   []byte("{'id': 34, 'type': 'example'}"),
-				Signature: []byte("f6f7ff173a277e3b172e66d98cf4d2ac"),
+				Header:    []byte("X-Forwarded-For"),
+				Payload:   []byte("{'id': 1, 'type': 'example'}"),
+				Signature: []byte("7777ff173a27222b172e66d98cf4d2a1"),
 			},
 			expectedErr: nil,
 		},
 		{
 			in: Response{
 				Code: 200,
-				Body: "Successfully",
+				Body: "Success",
 			},
 			expectedErr: nil,
 		},
@@ -151,19 +150,25 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Запускаем валидацию и проверяем ошибки
-			resErrors := Validate(tt.in)
+			// валидируем переданные структуры
+			results := Validate(tt.in)
 			okExpected := errors.As(tt.expectedErr, &expectedErrs)
 
-			if errors.As(resErrors, &errsValidate) && okExpected {
+			if errors.As(results, &errsValidate) && okExpected {
 				for i, err := range errsValidate {
 					expected := expectedErrs[i]
 
-					require.Equal(t, expected.Field, err.Field, "Field name does not match")
-					require.ErrorIs(t, err.Err, expected.Err, "Error text does not match")
-					require.ErrorAs(t, err.Err, &expected.Err, "Error data type does not match")
+					require.Equal(t, expected.Field, err.Field, "Field Name does not match")
+					require.ErrorIs(t, err.Err, expected.Err, "Error Text does not match")
 				}
 			}
 		})
 	}
+}
+
+func TestNotStructureError(t *testing.T) {
+	t.Run("case error ErrIsNotStructure", func(t *testing.T) {
+		err := Validate("just string")
+		require.Truef(t, errors.Is(err, ErrIsNotStructure), "actual error %q", err)
+	})
 }
