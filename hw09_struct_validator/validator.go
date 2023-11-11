@@ -147,7 +147,6 @@ func (checkRules CheckRules) getCheckErrors(fieldName string) []ValidationError 
 	return validateErrors
 }
 
-// валидация int
 func (checkRules CheckRules) validateInt(value int, fieldName string) []ValidationError {
 	validateErrors := make([]ValidationError, 0, len(checkRules.Types))
 
