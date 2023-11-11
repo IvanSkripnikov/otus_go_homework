@@ -27,7 +27,7 @@ type ValidationError struct {
 
 type ValidationErrors []ValidationError
 
-// пределяем константы названий всех обработчиков
+// пределяем константы названий всех обработчиков.
 const (
 	funcMin    = "min"
 	funcMax    = "max"
@@ -147,6 +147,7 @@ func (checkRules CheckRules) getCheckErrors(fieldName string) []ValidationError 
 	return validateErrors
 }
 
+// валидация int.
 func (checkRules CheckRules) validateInt(value int, fieldName string) []ValidationError {
 	validateErrors := make([]ValidationError, 0, len(checkRules.Types))
 
@@ -191,7 +192,7 @@ func (checkRules CheckRules) validateInt(value int, fieldName string) []Validati
 	return validateErrors
 }
 
-// валидация string
+// валидация string.
 func (checkRules CheckRules) validateString(value string, fieldName string) []ValidationError {
 	validateErrors := make([]ValidationError, 0, len(checkRules.Types))
 
@@ -243,7 +244,7 @@ func (checkRules CheckRules) validateString(value string, fieldName string) []Va
 	return validateErrors
 }
 
-// валидация []int
+// валидация []int.
 func (checkRules CheckRules) validateSliceInt(items []int, fieldName string) []ValidationError {
 	validateErrors := make([]ValidationError, 0, len(items))
 
@@ -257,7 +258,7 @@ func (checkRules CheckRules) validateSliceInt(items []int, fieldName string) []V
 	return validateErrors
 }
 
-// валидация []string
+// валидация []string.
 func (checkRules CheckRules) validateSliceString(items []string, fieldName string) []ValidationError {
 	validateErrors := make([]ValidationError, 0, len(items))
 
@@ -322,7 +323,7 @@ func getCheckRules(tagValidate string) CheckRules {
 	return checkRules
 }
 
-// переконвертировать значение к числу
+// переконвертировать значение к числу.
 func convertValidatorToInt(validator, validatorType string) (int, error) {
 	var resErr error
 	value, err := strconv.Atoi(getValidatorValue(validator, validatorType))
