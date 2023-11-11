@@ -25,15 +25,18 @@ type ValidationError struct {
 	Err   error
 }
 
+type ValidationErrors []ValidationError
+
+// пределяем константы названий всех обработчиков
 const (
-	typeMin    = "min"
-	typeMax    = "max"
-	typeLen    = "len"
-	typeIn     = "in"
-	typeRegexp = "regexp"
+	funcMin    = "min"
+	funcMax    = "max"
+	funcLen    = "len"
+	funcIn     = "in"
+	funcRegexp = "regexp"
 )
 
-type ValidationRules struct {
+type CheckRules struct {
 	Min           int
 	Max           int
 	Len           int
@@ -42,8 +45,6 @@ type ValidationRules struct {
 	Types         []string
 	ErrValidators []error
 }
-
-type ValidationErrors []ValidationError
 
 func (v ValidationErrors) Error() string {
 	builder := strings.Builder{}
@@ -64,42 +65,43 @@ func Validate(v interface{}) error {
 
 	itemValue := reflect.ValueOf(v)
 	numFields := itemType.NumField()
-	resErrors := make([]ValidationError, 0, numFields)
+	validateErrors := make([]ValidationError, 0, numFields)
 
+	// начинаем рассматривать поля
 	for i := 0; i < numFields; i++ {
 		fieldOfType := itemType.Field(i)
 		fieldValue := itemValue.Field(i)
 		fieldName := fieldOfType.Name
 
-		// Проверяем является ли поле публичным
+		// если поле не публичное - пропускаем
 		if !fieldOfType.IsExported() {
 			continue
 		}
 
-		// Получаем теги для текщего поля
-		fieldTag := fieldOfType.Tag
-		tagValidate, ok := fieldTag.Lookup("validate")
-		if !ok || len(fieldTag) == 0 {
+		// получаем теги для текщего поля
+		tagName := fieldOfType.Tag
+		tagValidate, ok := tagName.Lookup("validate")
+		if !ok || len(tagName) == 0 {
 			continue
 		}
 
-		// Формируем массив правил валидации
-		rules := makeValidators(tagValidate)
-		if len(rules.ErrValidators) > 0 {
-			resErrors = append(resErrors, rules.makeRulesErrors(fieldName)...)
+		// получаем правила валидации
+		checkRules := getCheckRules(tagValidate)
+		if len(checkRules.ErrValidators) > 0 {
+			validateErrors = append(validateErrors, checkRules.getCheckErrors(fieldName)...)
 		}
 
 		switch fieldValue.Kind() { //nolint:exhaustive
 		case reflect.Int:
-			errsValidate := rules.validateInt(int(fieldValue.Int()), fieldName)
+			errsValidate := checkRules.validateInt(int(fieldValue.Int()), fieldName)
 			if len(errsValidate) > 0 {
-				resErrors = append(resErrors, errsValidate...)
+				validateErrors = append(validateErrors, errsValidate...)
 			}
 
 		case reflect.String:
-			errsValidate := rules.validateString(fieldValue.String(), fieldName)
+			errsValidate := checkRules.validateString(fieldValue.String(), fieldName)
 			if len(errsValidate) > 0 {
-				resErrors = append(resErrors, errsValidate...)
+				validateErrors = append(validateErrors, errsValidate...)
 			}
 
 		case reflect.Slice:
@@ -107,69 +109,68 @@ func Validate(v interface{}) error {
 
 			switch items := fieldValue.Interface().(type) {
 			case []int:
-				errsValidate = rules.validateSliceInt(items, fieldName)
+				errsValidate = checkRules.validateSliceInt(items, fieldName)
 
 			case []string:
-				errsValidate = rules.validateSliceString(items, fieldName)
+				errsValidate = checkRules.validateSliceString(items, fieldName)
 			}
 
 			if len(errsValidate) > 0 {
-				resErrors = append(resErrors, errsValidate...)
+				validateErrors = append(validateErrors, errsValidate...)
 			}
 
 		default:
-			resErrors = append(resErrors, ValidationError{
+			validateErrors = append(validateErrors, ValidationError{
 				Field: fieldName,
 				Err:   ErrUnhandledType,
 			})
 		}
 	}
 
-	if len(resErrors) > 0 {
-		return ValidationErrors(resErrors)
+	if len(validateErrors) > 0 {
+		return ValidationErrors(validateErrors)
 	}
 
 	return nil
 }
 
-// Сформировать ошибки для правил валидации.
-func (rules ValidationRules) makeRulesErrors(fieldName string) []ValidationError {
-	resErrors := make([]ValidationError, 0, len(rules.ErrValidators))
+func (checkRules CheckRules) getCheckErrors(fieldName string) []ValidationError {
+	validateErrors := make([]ValidationError, 0, len(checkRules.ErrValidators))
 
-	for _, validationErr := range rules.ErrValidators {
-		resErrors = append(resErrors, ValidationError{
+	for _, validationErr := range checkRules.ErrValidators {
+		validateErrors = append(validateErrors, ValidationError{
 			Field: fieldName,
 			Err:   validationErr,
 		})
 	}
 
-	return resErrors
+	return validateErrors
 }
 
-// Валидация целочисленных значений.
-func (rules ValidationRules) validateInt(value int, fieldName string) []ValidationError {
-	resErrors := make([]ValidationError, 0, len(rules.Types))
+// валидация int
+func (checkRules CheckRules) validateInt(value int, fieldName string) []ValidationError {
+	validateErrors := make([]ValidationError, 0, len(checkRules.Types))
 
-	for _, validationType := range rules.Types {
+	for _, validationType := range checkRules.Types {
 		var errMessage error
 
 		switch validationType {
-		case typeMin:
-			hasValid := value >= rules.Min
+		case funcMin:
+			hasValid := value >= checkRules.Min
 			if !hasValid {
 				errMessage = ErrLessThanMin
 			}
 
-		case typeMax:
-			hasValid := value <= rules.Max
+		case funcMax:
+			hasValid := value <= checkRules.Max
 			if !hasValid {
 				errMessage = ErrMoreThanMax
 			}
 
-		case typeIn:
-			hasValid, err := sliceContains(value, reflect.Int, rules.InRange)
+		case funcIn:
+			hasValid, err := inArray(value, reflect.Int, checkRules.InRange)
 			if err != nil {
-				resErrors = append(resErrors, ValidationError{
+				validateErrors = append(validateErrors, ValidationError{
 					Field: fieldName,
 					Err:   err,
 				})
@@ -181,34 +182,34 @@ func (rules ValidationRules) validateInt(value int, fieldName string) []Validati
 		}
 
 		if errMessage != nil {
-			resErrors = append(resErrors, ValidationError{
+			validateErrors = append(validateErrors, ValidationError{
 				Field: fieldName,
 				Err:   errMessage,
 			})
 		}
 	}
 
-	return resErrors
+	return validateErrors
 }
 
-// Валидация строковых значений.
-func (rules ValidationRules) validateString(value string, fieldName string) []ValidationError {
-	resErrors := make([]ValidationError, 0, len(rules.Types))
+// валидация string
+func (checkRules CheckRules) validateString(value string, fieldName string) []ValidationError {
+	validateErrors := make([]ValidationError, 0, len(checkRules.Types))
 
-	for _, validationType := range rules.Types {
+	for _, validationType := range checkRules.Types {
 		var errMessage error
 
 		switch validationType {
-		case typeLen:
-			hasValid := len(value) == rules.Len
+		case funcLen:
+			hasValid := len(value) == checkRules.Len
 			if !hasValid {
 				errMessage = ErrMismatchedLength
 			}
 
-		case typeIn:
-			hasValid, err := sliceContains(value, reflect.String, rules.InRange)
+		case funcIn:
+			hasValid, err := inArray(value, reflect.String, checkRules.InRange)
 			if err != nil {
-				resErrors = append(resErrors, ValidationError{
+				validateErrors = append(validateErrors, ValidationError{
 					Field: fieldName,
 					Err:   err,
 				})
@@ -218,10 +219,10 @@ func (rules ValidationRules) validateString(value string, fieldName string) []Va
 				errMessage = ErrNotInList
 			}
 
-		case typeRegexp:
-			hasValid, err := regexp.MatchString(rules.Regexp, value)
+		case funcRegexp:
+			hasValid, err := regexp.MatchString(checkRules.Regexp, value)
 			if err != nil {
-				resErrors = append(resErrors, ValidationError{
+				validateErrors = append(validateErrors, ValidationError{
 					Field: fieldName,
 					Err:   err,
 				})
@@ -233,98 +234,97 @@ func (rules ValidationRules) validateString(value string, fieldName string) []Va
 		}
 
 		if errMessage != nil {
-			resErrors = append(resErrors, ValidationError{
+			validateErrors = append(validateErrors, ValidationError{
 				Field: fieldName,
 				Err:   errMessage,
 			})
 		}
 	}
 
-	return resErrors
+	return validateErrors
 }
 
-// Валидация целочисленных слайсов.
-func (rules ValidationRules) validateSliceInt(items []int, fieldName string) []ValidationError {
-	resErrors := make([]ValidationError, 0, len(items))
+// валидация []int
+func (checkRules CheckRules) validateSliceInt(items []int, fieldName string) []ValidationError {
+	validateErrors := make([]ValidationError, 0, len(items))
 
 	for _, itemValue := range items {
-		errsValidate := rules.validateInt(itemValue, fieldName)
-		if len(errsValidate) > 0 {
-			resErrors = append(resErrors, errsValidate...)
+		errorsValidate := checkRules.validateInt(itemValue, fieldName)
+		if len(errorsValidate) > 0 {
+			validateErrors = append(validateErrors, errorsValidate...)
 		}
 	}
 
-	return resErrors
+	return validateErrors
 }
 
-// Валидация строковых слайсов.
-func (rules ValidationRules) validateSliceString(items []string, fieldName string) []ValidationError {
-	resErrors := make([]ValidationError, 0, len(items))
+// валидация []string
+func (checkRules CheckRules) validateSliceString(items []string, fieldName string) []ValidationError {
+	validateErrors := make([]ValidationError, 0, len(items))
 
 	for _, itemValue := range items {
-		errsValidate := rules.validateString(itemValue, fieldName)
+		errsValidate := checkRules.validateString(itemValue, fieldName)
 		if len(errsValidate) > 0 {
-			resErrors = append(resErrors, errsValidate...)
+			validateErrors = append(validateErrors, errsValidate...)
 		}
 	}
 
-	return resErrors
+	return validateErrors
 }
 
-// Сформировать правила для валидации.
-func makeValidators(tagValidate string) ValidationRules {
-	var rules ValidationRules
-	validators := strings.Split(tagValidate, "|")
+func getCheckRules(tagValidate string) CheckRules {
+	var checkRules CheckRules
+	checks := strings.Split(tagValidate, "|")
 
-	for _, validator := range validators {
-		validationType := strings.Split(validator, ":")[0]
+	for _, check := range checks {
+		validationType := strings.Split(check, ":")[0]
 
 		switch validationType {
-		case typeMin:
-			value, err := castNumberValidator(validator, typeMin)
+		case funcMin:
+			value, err := convertValidatorToInt(check, funcMin)
 			if err != nil {
-				rules.ErrValidators = append(rules.ErrValidators, err)
+				checkRules.ErrValidators = append(checkRules.ErrValidators, err)
 				continue
 			}
 
-			rules.Min = value
-			rules.Types = append(rules.Types, typeMin)
+			checkRules.Min = value
+			checkRules.Types = append(checkRules.Types, funcMin)
 
-		case typeMax:
-			value, err := castNumberValidator(validator, typeMax)
+		case funcMax:
+			value, err := convertValidatorToInt(check, funcMax)
 			if err != nil {
-				rules.ErrValidators = append(rules.ErrValidators, err)
+				checkRules.ErrValidators = append(checkRules.ErrValidators, err)
 				continue
 			}
 
-			rules.Max = value
-			rules.Types = append(rules.Types, typeMax)
+			checkRules.Max = value
+			checkRules.Types = append(checkRules.Types, funcMax)
 
-		case typeLen:
-			value, err := castNumberValidator(validator, typeLen)
+		case funcLen:
+			value, err := convertValidatorToInt(check, funcLen)
 			if err != nil {
-				rules.ErrValidators = append(rules.ErrValidators, err)
+				checkRules.ErrValidators = append(checkRules.ErrValidators, err)
 				continue
 			}
 
-			rules.Len = value
-			rules.Types = append(rules.Types, typeLen)
+			checkRules.Len = value
+			checkRules.Types = append(checkRules.Types, funcLen)
 
-		case typeIn:
-			rules.InRange = strings.Split(getValidatorValue(validator, typeIn), ",")
-			rules.Types = append(rules.Types, typeIn)
+		case funcIn:
+			checkRules.InRange = strings.Split(getValidatorValue(check, funcIn), ",")
+			checkRules.Types = append(checkRules.Types, funcIn)
 
-		case typeRegexp:
-			rules.Regexp = getValidatorValue(validator, typeRegexp)
-			rules.Types = append(rules.Types, typeRegexp)
+		case funcRegexp:
+			checkRules.Regexp = getValidatorValue(check, funcRegexp)
+			checkRules.Types = append(checkRules.Types, funcRegexp)
 		}
 	}
 
-	return rules
+	return checkRules
 }
 
-// Привести значение правила валидатора к числу.
-func castNumberValidator(validator, validatorType string) (int, error) {
+// переконвертировать значение к числу
+func convertValidatorToInt(validator, validatorType string) (int, error) {
 	var resErr error
 	value, err := strconv.Atoi(getValidatorValue(validator, validatorType))
 	if err != nil {
@@ -334,27 +334,25 @@ func castNumberValidator(validator, validatorType string) (int, error) {
 	return value, resErr
 }
 
-// Получить значение для валидатора.
 func getValidatorValue(validator, replacement string) string {
 	return strings.Replace(validator, replacement+":", "", 1)
 }
 
-// Содержится ли значение в слайсе.
-func sliceContains(value interface{}, kind reflect.Kind, inRanges []string) (bool, error) {
-	for _, itemRange := range inRanges {
+func inArray(value interface{}, kind reflect.Kind, array []string) (bool, error) {
+	for _, v := range array {
 		switch kind { //nolint:exhaustive
 		case reflect.Int:
-			itemRangeValue, err := strconv.Atoi(itemRange)
+			itemValue, err := strconv.Atoi(v)
 			if err != nil {
 				return false, err
 			}
 
-			if value == itemRangeValue {
+			if value == itemValue {
 				return true, nil
 			}
 
 		case reflect.String:
-			if value == itemRange {
+			if value == v {
 				return true, nil
 			}
 		}
