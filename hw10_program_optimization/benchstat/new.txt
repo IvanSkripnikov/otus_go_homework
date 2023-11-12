@@ -1,6 +1,6 @@
 goos: linux
 goarch: amd64
-pkg: github.com/Ruslan-Androsenko/otus-home-work/hw10_program_optimization
+pkg: github.com/IvanSkripnikov/otus_go_homework/hw10_program_optimization
 cpu: 11th Gen Intel(R) Core(TM) i7-11700 @ 2.50GHz
 BenchmarkGetDomainStatFindCom-16        	  309140	      3762 ns/op	    5936 B/op	      25 allocs/op
 BenchmarkGetDomainStatFindCom-16        	  310825	      3781 ns/op	    5936 B/op	      25 allocs/op
@@ -123,4 +123,4 @@ BenchmarkGetDomainStatFindUnknown-16    	  401492	      2923 ns/op	    5264 B/op
 BenchmarkGetDomainStatFindUnknown-16    	  405246	      2916 ns/op	    5264 B/op	      10 allocs/op
 BenchmarkGetDomainStatFindUnknown-16    	  409125	      2921 ns/op	    5264 B/op	      10 allocs/op
 PASS
-ok  	github.com/Ruslan-Androsenko/otus-home-work/hw10_program_optimization	146.190s
+ok  	github.com/IvanSkripnikov/otus_go_homework/hw10_program_optimization	146.190s
