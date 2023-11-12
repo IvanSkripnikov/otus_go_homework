@@ -14,7 +14,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyJsonDecode(in *jlexer.Lexer, out *User) {
+func easyJSONDecode(in *jlexer.Lexer, out *User) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -46,7 +46,7 @@ func easyJsonDecode(in *jlexer.Lexer, out *User) {
 	}
 }
 
-func easyJsonEncode(out *jwriter.Writer, in User) {
+func easyJSONEncode(out *jwriter.Writer, in User) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -60,20 +60,20 @@ func easyJsonEncode(out *jwriter.Writer, in User) {
 
 func (v User) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyJsonEncode(&w, v)
+	easyJSONEncode(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 func (v User) MarshalEasyJSON(w *jwriter.Writer) {
-	easyJsonEncode(w, v)
+	easyJSONEncode(w, v)
 }
 
 func (v *User) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyJsonDecode(&r, v)
+	easyJSONDecode(&r, v)
 	return r.Error()
 }
 
 func (v *User) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyJsonDecode(l, v)
+	easyJSONDecode(l, v)
 }
