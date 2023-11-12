@@ -60,7 +60,6 @@ func easyjsonEncode(out *jwriter.Writer, in User) {
 	out.RawByte('}')
 }
 
-// MarshalJSON supports json.Marshaler interface
 func (v User) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
 	easyjsonEncode(&w, v)
