@@ -33,7 +33,6 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 			domainKey := strings.ToLower(emails[1])
 			result[domainKey]++
 		}
-
 	}
 
 	if err := scanner.Err(); err != nil {
