@@ -1,8 +1,8 @@
 goos: linux
 goarch: amd64
-pkg: github.com/Ruslan-Androsenko/otus-home-work/hw10_program_optimization
-cpu: 11th Gen Intel(R) Core(TM) i7-11700 @ 2.50GHz
-                            │ ./benchstat/new.txt │
+pkg: github.com/IvanSkripnikov/otus_go_homework/hw10_program_optimization
+cpu: 11th Gen Intel(R) Core(TM) i7-10700 @ 2.90GHz
+                            │ ./benchstat/after.txt │
                             │       sec/op        │
 GetDomainStatFindCom-16               3.791µ ± 0%
 GetDomainStatFindGov-16               3.407µ ± 0%
@@ -10,7 +10,7 @@ GetDomainStatFindNet-16               3.377µ ± 0%
 GetDomainStatFindUnknown-16           2.917µ ± 0%
 geomean                               3.358µ
 
-                            │ ./benchstat/new.txt │
+                            │ ./benchstat/after.txt │
                             │        B/op         │
 GetDomainStatFindCom-16              5.797Ki ± 0%
 GetDomainStatFindGov-16              5.648Ki ± 0%
@@ -18,7 +18,7 @@ GetDomainStatFindNet-16              5.648Ki ± 0%
 GetDomainStatFindUnknown-16          5.141Ki ± 0%
 geomean                              5.553Ki
 
-                            │ ./benchstat/new.txt │
+                            │ ./benchstat/after.txt │
                             │      allocs/op      │
 GetDomainStatFindCom-16                25.00 ± 0%
 GetDomainStatFindGov-16                18.00 ± 0%
@@ -27,7 +27,7 @@ GetDomainStatFindUnknown-16            10.00 ± 0%
 geomean                                16.87
 
 pkg: github.com/fixme_my_friend/hw10_program_optimization
-                            │ ./benchstat/old.txt │
+                            │ ./benchstat/before.txt │
                             │       sec/op        │
 GetDomainStatFindCom-16               98.80m ± 0%
 GetDomainStatFindGov-16               101.8m ± 2%
@@ -35,7 +35,7 @@ GetDomainStatFindNet-16               102.4m ± 1%
 GetDomainStatFindUnknown-16           134.2m ± 3%
 geomean                               108.4m
 
-                            │ ./benchstat/old.txt │
+                            │ ./benchstat/before.txt │
                             │        B/op         │
 GetDomainStatFindCom-16              129.7Mi ± 0%
 GetDomainStatFindGov-16              129.7Mi ± 0%
@@ -43,7 +43,7 @@ GetDomainStatFindNet-16              129.7Mi ± 0%
 GetDomainStatFindUnknown-16          194.6Mi ± 0%
 geomean                              143.6Mi
 
-                            │ ./benchstat/old.txt │
+                            │ ./benchstat/before.txt │
                             │      allocs/op      │
 GetDomainStatFindCom-16               1.700M ± 0%
 GetDomainStatFindGov-16               1.700M ± 0%
