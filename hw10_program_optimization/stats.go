@@ -30,13 +30,13 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 		emails := strings.SplitN(user.Email, "@", 2)
 
 		if len(emails) > 1 {
-			domainKey := strings.ToLower(emails[1])
-			result[domainKey]++
+			domainName := strings.ToLower(emails[1])
+			result[domainName]++
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("read users error: %w", err)
+		return nil, fmt.Errorf("read error: %w", err)
 	}
 
 	return result, nil

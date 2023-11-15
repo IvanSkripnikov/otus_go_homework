@@ -1,7 +1,7 @@
 goos: linux
 goarch: amd64
 pkg: github.com/fixme_my_friend/hw10_program_optimization
-cpu: 11th Gen Intel(R) Core(TM) i7-11700 @ 2.50GHz
+cpu: 11th Gen Intel(R) Core(TM) i7-10700 @ 2.90GHz
 BenchmarkGetDomainStatFindCom-16        	      12	 100195109 ns/op	136046468 B/op	 1700099 allocs/op
 BenchmarkGetDomainStatFindCom-16        	      12	  99440494 ns/op	136046522 B/op	 1700099 allocs/op
 BenchmarkGetDomainStatFindCom-16        	      12	  98690976 ns/op	136046460 B/op	 1700099 allocs/op
