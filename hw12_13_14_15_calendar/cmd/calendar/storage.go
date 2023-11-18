@@ -3,23 +3,34 @@ package main
 import (
 	"database/sql"
 	"log"
+
+	_ "github.com/jackc/pgx/stdlib"
 )
 
 var db sql.DB
 
-type Event struct {
-	ID           int
-	Title        string
-	DateStart    string
-	DateEnd      string
-	Description  string
-	UserID       int
-	RememberTime int
-}
+type (
+	Event struct {
+		ID           int
+		Title        string
+		DateStart    string
+		DateEnd      string
+		Description  string
+		UserID       int
+		RememberTime int
+	}
+
+	Notice struct {
+		ID     int
+		Title  string
+		Date   string
+		UserID int
+	}
+)
 
 func main() {
-	db, err := sql.Open("mysql",
-		"user:password@tcp(127.0.0.1:3306)/hello")
+	dsn := "postgres://myuser:mypass@localhost:5432/mydb?sslmode=verify-full"
+	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
