@@ -57,10 +57,12 @@ func main() {
 			default:
 				err = telnet.Send()
 				if checkError(err) {
-					log.Printf("Failed send data to socket, %v", err)
+					log.Printf("Error while sending data to socket, %v", err)
 				}
 
-				stopGoroutinesIfEndOfFile(err, stopFunc)
+				if errors.Is(err, io.EOF) {
+					stopFunc()
+				}
 			}
 		}
 	}()
@@ -74,10 +76,12 @@ func main() {
 			default:
 				err = telnet.Receive()
 				if checkError(err) {
-					log.Printf("Failed receive data from socket, %v", err)
+					log.Printf("Error while get data from socket, %v", err)
 				}
 
-				stopGoroutinesIfEndOfFile(err, stopFunc)
+				if errors.Is(err, io.EOF) {
+					stopFunc()
+				}
 			}
 		}
 	}()
@@ -90,22 +94,17 @@ func main() {
 }
 
 // проверяем наличие флага.
-func checkExistsFlags(args []string) (n int, hasFound bool) {
-	for _, argItem := range args {
-		if strings.HasPrefix(argItem, "-") {
+func checkExistsFlags(args []string) (int, bool) {
+	n := 0
+	found := false
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "-") {
 			n++
-			hasFound = true
+			found = true
 		}
 	}
 
-	return
-}
-
-// Остановить горутины если ошибка является концом файла.
-func stopGoroutinesIfEndOfFile(err error, stopFunc context.CancelFunc) {
-	if errors.Is(err, io.EOF) {
-		stopFunc()
-	}
+	return n, found
 }
 
 // проверяем входные данные.
@@ -122,17 +121,17 @@ func validateRequest(args []string) bool {
 // перенести данные из одного источника в другой.
 func transferData(in io.ReadCloser, out io.Writer) error {
 	buffer := make([]byte, 1024)
-	n, errRead := in.Read(buffer)
-	if checkError(errRead) {
-		return fmt.Errorf("cannot read from input: %w", errRead)
+	n, err := in.Read(buffer)
+	if checkError(err) {
+		return fmt.Errorf("read error: %w", err)
 	}
 
-	_, errWrite := out.Write(buffer[:n])
-	if errWrite != nil {
-		return fmt.Errorf("cannot write to output: %w", errWrite)
+	_, err = out.Write(buffer[:n])
+	if err != nil {
+		return fmt.Errorf("write error: %w", err)
 	}
 
-	return errRead
+	return err
 }
 
 // проверяем, действительно ли это ошибка.
