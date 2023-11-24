@@ -31,24 +31,24 @@ type Telnet struct {
 	out     io.Writer
 }
 
-func (t *Telnet) Connect() error {
-	conn, err := net.DialTimeout("tcp", t.address, t.timeout)
+func (telnet *Telnet) Connect() error {
+	conn, err := net.DialTimeout("tcp", telnet.address, telnet.timeout)
 	if err != nil {
 		return fmt.Errorf("cannot connect: %w", err)
 	}
 
-	t.conn = conn
+	telnet.conn = conn
 	return nil
 }
 
-func (t *Telnet) Close() error {
-	err := t.in.Close()
+func (telnet *Telnet) Close() error {
+	err := telnet.in.Close()
 	if err != nil {
 		return fmt.Errorf("cannot closing input: %w", err)
 	}
 
-	if t.conn != nil {
-		err = t.conn.Close()
+	if telnet.conn != nil {
+		err = telnet.conn.Close()
 		if err != nil {
 			return fmt.Errorf("cannot closing connect: %w", err)
 		}
@@ -57,10 +57,10 @@ func (t *Telnet) Close() error {
 	return nil
 }
 
-func (t *Telnet) Send() error {
-	return transferData(t.in, t.conn)
+func (telnet *Telnet) Send() error {
+	return transferData(telnet.in, telnet.conn)
 }
 
-func (t *Telnet) Receive() error {
-	return transferData(t.conn, t.out)
+func (telnet *Telnet) Receive() error {
+	return transferData(telnet.conn, telnet.out)
 }

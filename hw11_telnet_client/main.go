@@ -39,10 +39,7 @@ func main() {
 	address := net.JoinHostPort(os.Args[countArgs-2], os.Args[countArgs-1])
 	telnet := NewTelnetClient(address, timeout, os.Stdin, os.Stdout)
 	defer func() {
-		err := telnet.Close()
-		if err != nil {
-			log.Println(err)
-		}
+		telnet.Close()
 	}()
 
 	err := telnet.Connect()
