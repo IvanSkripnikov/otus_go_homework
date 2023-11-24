@@ -72,7 +72,7 @@ func TestGoogleMailServer(t *testing.T) {
 	timeout, err := time.ParseDuration("10s")
 	require.NoError(t, err)
 
-	address := net.JoinHostPort("smtp.gmail.com", "465")
+	address := net.JoinHostPort("smtp.gmail.com", "587")
 	client := NewTelnetClient(address, timeout, io.NopCloser(in), out)
 	require.NoError(t, client.Connect())
 	defer func() { require.NoError(t, client.Close()) }()
