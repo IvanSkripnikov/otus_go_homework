@@ -91,38 +91,32 @@ func TestMailServer(t *testing.T) {
 	parts := regExp.Split(responseConnect, -1)
 	require.Len(t, parts, 1)
 
-	tests := []struct {
-		name     string
-		message  string
-		expected string
-	}{
-		{
-			name:     "Hello server",
-			message:  "HELO hi google\r\n",
-			expected: "250 mail.com Hello hi google \\[.*\\]\r\n",
-		},
-		{
-			name:    "Ehlo server",
-			message: "EHLO mail.com\r\n",
-			//nolint:lll
-			expected: "250-mail.com Hello mail.com \\[.*\\]\r\n250-8BITMIME\r\n250-SIZE 141557760\r\n250 STARTTLS\r\n$",
-		},
-	}
+	t.Run("HELLO server", func(t *testing.T) {
+		out.Truncate(0)
 
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			out.Truncate(0)
+		in.WriteString("HELO hi google\r\n")
+		err = client.Send()
+		require.NoError(t, err)
 
-			in.WriteString(tc.message)
-			err = client.Send()
-			require.NoError(t, err)
+		err = client.Receive()
+		require.NoError(t, err)
+		regExp, errRegExp := regexp.Compile("250 mail.com Hello hi google \\[.*\\]\r\n")
+		require.NoError(t, errRegExp)
+		require.Regexp(t, regExp, out.String())
+	})
 
-			err = client.Receive()
-			require.NoError(t, err)
-			regExp, errRegExp := regexp.Compile(tc.expected)
-			require.NoError(t, errRegExp)
-			require.Regexp(t, regExp, out.String())
-		})
-	}
+	t.Run("EHLO server", func(t *testing.T) {
+		out.Truncate(0)
+
+		in.WriteString("EHLO mail.com\r\n")
+		err = client.Send()
+		require.NoError(t, err)
+
+		err = client.Receive()
+		require.NoError(t, err)
+		regExp, errRegExp := regexp.Compile("250-mail.com Hello mail.com \\[.*\\]\r\n250-8BITMIME\r\n250-SIZE 141557760\r\n250 STARTTLS\r\n$")
+		require.NoError(t, errRegExp)
+		require.Regexp(t, regExp, out.String())
+	})
+
 }
