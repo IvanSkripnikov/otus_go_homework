@@ -100,8 +100,7 @@ func TestMailServer(t *testing.T) {
 
 		err = client.Receive()
 		require.NoError(t, err)
-		regExp, errRegExp := regexp.Compile("250 mail.com Hello hi google \\[.*\\]\r\n")
-		require.NoError(t, errRegExp)
+		regExp := regexp.MustCompile("250 mail.com Hello hi google \\[.*\r\n")
 		require.Regexp(t, regExp, out.String())
 	})
 
@@ -114,9 +113,7 @@ func TestMailServer(t *testing.T) {
 
 		err = client.Receive()
 		require.NoError(t, err)
-		regExp, errRegExp := regexp.Compile("250-mail.com Hello mail.com \\[.*\\]\r\n250-8BITMIME\r\n250-SIZE 141557760\r\n250 STARTTLS\r\n$")
-		require.NoError(t, errRegExp)
+		regExp := regexp.MustCompile("250-mail.com Hello mail.com \\[.*\r\n250-8BITMIME\r\n250-SIZE 141557760\r\n250 STARTTLS\r\n$")
 		require.Regexp(t, regExp, out.String())
 	})
-
 }
