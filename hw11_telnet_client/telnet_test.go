@@ -113,7 +113,8 @@ func TestMailServer(t *testing.T) {
 
 		err = client.Receive()
 		require.NoError(t, err)
-		regExp := regexp.MustCompile("250-mail.com Hello mail.com \\[.*\r\n250-8BITMIME\r\n250-SIZE 141557760\r\n250 STARTTLS\r\n$")
+		pattern := "250-mail.com Hello mail.com \\[.*\r\n250-8BITMIME\r\n250-SIZE 141557760\r\n250 STARTTLS\r\n$"
+		regExp := regexp.MustCompile(pattern)
 		require.Regexp(t, regExp, out.String())
 	})
 }
