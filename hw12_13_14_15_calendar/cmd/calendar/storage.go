@@ -2,7 +2,12 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
+	"github.com/IvanSkripnikov/otus_go_homework/hw12_13_14_15_calendar/internal/logger"
+	"io/ioutil"
 	"log"
+	"os"
+	"strings"
 
 	_ "github.com/jackc/pgx/stdlib"
 )
@@ -27,6 +32,46 @@ type (
 		UserID int
 	}
 )
+
+const migrationsDir = "./migrations"
+
+type DataBaseConnection struct {
+	host     string
+	db       string
+	user     string
+	password string
+}
+
+// NewDBConnection подключение к БД сервиса
+func NewDBConnection() *sql.DB {
+	dbConn := DataBaseConnection{
+		host:     os.Getenv("DB_HOST"),
+		db:       os.Getenv("DB_NAME"),
+		user:     os.Getenv("DB_USER"),
+		password: os.Getenv("DB_PASS"),
+	}
+	dataSource := dbConn.getDataSource()
+	db, err := sql.Open("mysql", dataSource)
+	errPing := db.Ping()
+
+	if err != nil {
+		fatalMessage := fmt.Sprintf("Failed to connect to service database. Error: %v", err)
+		logger.Fatal(fatalMessage)
+	} else if errPing != nil {
+		fatalMessage := fmt.Sprintf("Failed to ping service database. Error: %v", errPing)
+		logger.Fatal(fatalMessage)
+	} else {
+		logger.Debug("Connection to the service database successfully established.")
+	}
+
+	return db
+}
+
+// getDataSource Получить строку соединения для БД
+func (conn *DataBaseConnection) getDataSource() string {
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
+		conn.user, conn.password, conn.host, 3306, conn.db)
+}
 
 func main() {
 	dsn := "postgres://myuser:mypass@localhost:5432/mydb?sslmode=verify-full"
@@ -158,4 +203,48 @@ WHERE id = $1`
 	}
 
 	return true
+}
+
+// CreateTables Выполнить запросы на создание таблиц
+func CreateTables() {
+	dbConn := NewDBConnection()
+	defer dbConn.Close()
+
+	files, err := ioutil.ReadDir(migrationsDir)
+	if err != nil {
+		errMessage := fmt.Sprintf("Failed to get list of migration files. Error: %v", err)
+		logger.Error(errMessage)
+	} else {
+		logger.Debug("List of migration files retrieved successfully.")
+	}
+
+	for _, file := range files {
+		if !file.IsDir() {
+			migration := models.Migration{
+				Version: file.Name(),
+			}
+
+			if !migration.HasExistsRow(dbConn) {
+				data, err := ioutil.ReadFile(migrationsDir + "/" + file.Name())
+
+				if err != nil {
+					errMessage := fmt.Sprintf("Failed to read migration file: %v. Error: %v", file.Name(), err)
+					logger.Error(errMessage)
+				} else {
+					debugMessage := fmt.Sprintf("The migration file was successfully read: %v.", file.Name())
+					logger.Debug(debugMessage)
+				}
+
+				sqlQuery := strings.ReplaceAll(string(data), "\r\n", "")
+				result, err := dbConn.Exec(sqlQuery)
+				migration.InsertRow(dbConn)
+
+				if err == nil && result != nil {
+					appliedMigrations.Inc()
+					infoMessage := fmt.Sprintf("Migration has been applied successfully: %v.", file.Name())
+					logger.Info(infoMessage)
+				}
+			}
+		}
+	}
 }
