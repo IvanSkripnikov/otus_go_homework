@@ -1,0 +1,13 @@
+.env**
+README.md
+LICENSE
+
+# Docker
+docker-compose.yaml
+build/**/Dockerfile*
+
+# Git
+.git**
+
+# Utils
+.vscode/

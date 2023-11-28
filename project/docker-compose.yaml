@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: build/api/Dockerfile.dev
+    container_name: api
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    ports:
+      - target: 8080
+        published: 8080
+        protocol: TCP
+        mode: host
+    stdin_open: true
+    tty: true
+    volumes:
+      - type: bind
+        source: app
+        target: /go/src/app
+
+  db:
+    build:
+      context: .
+      dockerfile: build/db/Dockerfile
+    container_name: db
+    env_file:
+      - .env
+    healthcheck:
+      test: "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD"
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+    ports:
+      - target: 3306
+        published: 3306
+        protocol: TCP
+        mode: host
+    restart: always
+    volumes:
+      - type: volume
+        source: db-data
+        target: /var/lib/mysql
+        volume:
+          nocopy: true
+
+volumes:
+  db-data:
