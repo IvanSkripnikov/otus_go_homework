@@ -12,7 +12,10 @@ import (
 	_ "github.com/jackc/pgx/stdlib"
 )
 
-var db sql.DB
+var (
+	db   sql.DB
+	logg logger.Logger
+)
 
 type (
 	Event struct {
@@ -56,12 +59,12 @@ func NewDBConnection() *sql.DB {
 
 	if err != nil {
 		fatalMessage := fmt.Sprintf("Failed to connect to service database. Error: %v", err)
-		logger.Fatal(fatalMessage)
+		logg.Fatal(fatalMessage)
 	} else if errPing != nil {
 		fatalMessage := fmt.Sprintf("Failed to ping service database. Error: %v", errPing)
-		logger.Fatal(fatalMessage)
+		logg.Fatal(fatalMessage)
 	} else {
-		logger.Debug("Connection to the service database successfully established.")
+		logg.Debug("Connection to the service database successfully established.")
 	}
 
 	return db
@@ -213,9 +216,9 @@ func CreateTables() {
 	files, err := ioutil.ReadDir(migrationsDir)
 	if err != nil {
 		errMessage := fmt.Sprintf("Failed to get list of migration files. Error: %v", err)
-		logger.Error(errMessage)
+		logg.Error(errMessage)
 	} else {
-		logger.Debug("List of migration files retrieved successfully.")
+		logg.Debug("List of migration files retrieved successfully.")
 	}
 
 	for _, file := range files {
@@ -229,10 +232,10 @@ func CreateTables() {
 
 				if err != nil {
 					errMessage := fmt.Sprintf("Failed to read migration file: %v. Error: %v", file.Name(), err)
-					logger.Error(errMessage)
+					logg.Error(errMessage)
 				} else {
 					debugMessage := fmt.Sprintf("The migration file was successfully read: %v.", file.Name())
-					logger.Debug(debugMessage)
+					logg.Debug(debugMessage)
 				}
 
 				sqlQuery := strings.ReplaceAll(string(data), "\r\n", "")
@@ -240,9 +243,8 @@ func CreateTables() {
 				migration.InsertRow(dbConn)
 
 				if err == nil && result != nil {
-					appliedMigrations.Inc()
 					infoMessage := fmt.Sprintf("Migration has been applied successfully: %v.", file.Name())
-					logger.Info(infoMessage)
+					logg.Info(infoMessage)
 				}
 			}
 		}
