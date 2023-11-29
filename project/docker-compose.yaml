@@ -6,9 +6,6 @@ services:
       context: .
       dockerfile: build/api/Dockerfile.dev
     container_name: api
-    depends_on:
-      db:
-        condition: service_healthy
     env_file:
       - .env
     ports:
@@ -30,12 +27,6 @@ services:
     container_name: db
     env_file:
       - .env
-    healthcheck:
-      test: "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD"
-      interval: 1m30s
-      timeout: 30s
-      retries: 5
-      start_period: 30s
     ports:
       - target: 3306
         published: 3306
