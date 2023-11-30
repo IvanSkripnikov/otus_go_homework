@@ -1,62 +1,68 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"log"
-	"net/http"
-
 	"go-rest-api-docker/controllers"
-
-	"github.com/gorilla/mux"
+	"net/http"
+	"regexp"
 )
 
-type Response struct {
-	Message string `json:"message"`
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json;charset=utf-8")
-
-	data := Response{Message: "Welcome to the Go REST API!"}
-
-	var buf bytes.Buffer
-	j := json.NewEncoder(&buf)
-
-	if err := j.Encode(&data); err != nil {
-		log.Fatal(err)
-	}
-
-	res := buf.String()
-
-	log.Println(res)
-	_, err := fmt.Fprint(w, res)
-
+func initHTTPServer() error {
+	http.HandleFunc("/", Serve)
+	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
-		log.Fatal(err)
+		errMessage := fmt.Sprintf("Can't init HTTP server: %v", err)
+		fmt.Println(errMessage)
 	}
+	return nil
 }
 
-func SetupServer() *mux.Router {
-	r := mux.NewRouter()
+var routes = []route{
+	newRoute("GET", "/", controllers.HelloPage),
+	newRoute("GET", "/tasks", controllers.GetAllHandler),
+	newRoute("POST", "/tasks", controllers.CreateHandler),
+	newRoute("GET", "/tasks/([0-9]+)", controllers.GetHandler),
+	newRoute("PUT", "/tasks/([0-9]+)", controllers.UpdateHandler),
+	newRoute("DELETE", "/tasks/([0-9]+)", controllers.DeleteHandler),
+}
 
-	r.HandleFunc("/", handler)
-	return r
+func newRoute(method, pattern string, handler http.HandlerFunc) route {
+	return route{method, regexp.MustCompile("^" + pattern + "$"), handler}
+}
+
+type route struct {
+	method  string
+	regex   *regexp.Regexp
+	handler http.HandlerFunc
+}
+
+func Serve(w http.ResponseWriter, r *http.Request) {
+	var allow []string
+	for _, route := range routes {
+		matches := route.regex.FindStringSubmatch(r.URL.Path)
+		if len(matches) > 0 {
+			if r.Method != route.method {
+				allow = append(allow, route.method)
+				continue
+			}
+			//ctx := context.WithValue(r.Context(), ctxKey{}, matches[1:])
+			//route.handler(w, r.WithContext(ctx))
+			route.handler(w, r)
+
+		}
+	}
+	/*if len(allow) > 0 {
+		w.Header().Set("Allow", strings.Join(allow, ", "))
+		http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	http.NotFound(w, r)*/
 }
 
 func main() {
-	r := SetupServer()
-
-	// tasks route
-	s := r.PathPrefix("/tasks").Subrouter()
-	s.HandleFunc("", controllers.GetAllHandler).Methods("GET")
-	s.HandleFunc("", controllers.CreateHandler).Methods("POST")
-	s.HandleFunc("/{id}", controllers.GetHandler).Methods("GET")
-	s.HandleFunc("/{id}", controllers.UpdateHandler).Methods("PUT")
-	s.HandleFunc("/{id}", controllers.DeleteHandler).Methods("DELETE")
-
-	http.Handle("/", r)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	if err := initHTTPServer(); err != nil {
+		fatalMessage := fmt.Sprintf("Can't init http server, err: %v", err)
+		fmt.Println(fatalMessage)
+	}
+	return
 }
