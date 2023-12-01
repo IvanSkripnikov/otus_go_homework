@@ -1,4 +1,4 @@
-# go-rest-api-docker
+# app
 
 [![ci](https://github.com/ega4432/go-rest-api-docker/actions/workflows/ci.yaml/badge.svg)](https://github.com/ega4432/go-rest-api-docker/actions/workflows/ci.yaml)
 

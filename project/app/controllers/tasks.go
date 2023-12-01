@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"go-rest-api-docker/database"
+	"app/database"
 )
 
 const tableName string = "tasks"

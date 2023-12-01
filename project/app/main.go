@@ -1,8 +1,8 @@
 package main
 
 import (
+	"app/controllers"
 	"fmt"
-	"go-rest-api-docker/controllers"
 	"net/http"
 	"regexp"
 )
