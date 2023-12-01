@@ -3,17 +3,14 @@ FROM golang:1.20-alpine
 WORKDIR /go/src/app
 
 RUN apk update && \
-    apk add git
+    apk add git && \
+    apk add --no-cache alpine-conf
 
-# Copy go.mod and go.sum
-COPY app/go.* ./
+ADD ./app /go/src/app
 
-RUN go install github.com/cosmtrek/air@v1.40.4
+RUN cd /go/src/app && \
+    go install app
 
-COPY app/ ./
+ENTRYPOINT ["/go/bin/app"]
 
-RUN go get -d -v ./...
-
-EXPOSE 8080
-
-CMD [ "air", "-c", ".air.toml" ]
+WORKDIR "/go"
