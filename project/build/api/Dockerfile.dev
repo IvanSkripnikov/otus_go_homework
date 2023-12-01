@@ -1,9 +1,5 @@
 FROM golang:1.20-alpine
 
-ENV GOPATH /go
-ENV CGO_ENABLED 0
-ENV GO111MODULE on
-
 WORKDIR /go/src/app
 
 RUN apk update && \

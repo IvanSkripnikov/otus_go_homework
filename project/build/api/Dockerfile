@@ -1,8 +1,5 @@
 FROM golang:1.20 AS builder
 
-ENV GOPATH /go
-ENV CGO_ENABLED 0
-ENV GO111MODULE on
 ENV GOOS=linux
 ENV GOARCH=amd64
 
