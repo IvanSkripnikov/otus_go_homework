@@ -36,7 +36,5 @@ func init() {
 		log.Fatal("DB connection has been failed.", err.Error())
 	}
 
-	// defer Db.Close()
-
 	fmt.Println("connected!!")
 }

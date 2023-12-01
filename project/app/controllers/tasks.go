@@ -8,11 +8,10 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"go-rest-api-docker/database"
-
-	"github.com/gorilla/mux"
 )
 
 const tableName string = "tasks"
@@ -28,16 +27,15 @@ type Task struct {
 func GetHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	vars := mux.Vars(r)
-
 	var task Task
-	if vars["id"] == "" {
+	task.Id, _ = getIdFromRequestString(r.URL.Path)
+
+	if task.Id == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "{ \"message\": \"Invalid request GetHandler\"}"+r.URL.Path)
 		return
 	}
 
-	task.Id, _ = strconv.Atoi(vars["id"])
 	stmt, err := database.Db.Prepare(fmt.Sprintf("SELECT * from %s WHERE id = ?", tableName))
 
 	if err != nil {
@@ -189,10 +187,9 @@ func CreateHandler(w http.ResponseWriter, r *http.Request) {
 func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	vars := mux.Vars(r)
-
 	var t Task
-	if vars["id"] == "" {
+	t.Id, _ = getIdFromRequestString(r.URL.Path)
+	if t.Id == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "{ \"message\": \"Invalid request\"}")
 		return
@@ -222,7 +219,6 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t.Id, _ = strconv.Atoi(vars["id"])
 	t.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
 
 	if t.Title != "" && t.Body != "" {
@@ -295,9 +291,8 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	vars := mux.Vars(r)
 
-	id := vars["id"]
+	id, _ := getIdFromRequestString(r.URL.Path)
 	stmt, err := database.Db.Prepare(fmt.Sprintf("DELETE FROM %s WHERE id = ?", tableName))
 
 	if err != nil {
@@ -319,4 +314,10 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, id)
+}
+
+func getIdFromRequestString(url string) (int, error) {
+	vars := strings.Split(url, "/")
+
+	return strconv.Atoi(vars[len(vars)-1])
 }
