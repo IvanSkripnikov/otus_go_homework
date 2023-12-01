@@ -1,7 +1,3 @@
-# app
-
-[![ci](https://github.com/ega4432/go-rest-api-docker/actions/workflows/ci.yaml/badge.svg)](https://github.com/ega4432/go-rest-api-docker/actions/workflows/ci.yaml)
-
 ## Overview
 
 This repository is a template for a Todo application in the Golang that can run on any platform as long as Docker is running.
@@ -21,8 +17,6 @@ DELETE | `/tasks/{id}` | Delete a task |
 ## Usage
 
 ```shell
-$ git clone git@github.com:ega4432/go-rest-api-docker.git && cd go-rest-api-docker
-
 $ cp .env.example .env
 
 $ docker compose up --build
