@@ -7,8 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strconv"
-	"strings"
 	"time"
 
 	"app/database"
@@ -28,7 +26,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var task Task
-	task.Id, _ = getIdFromRequestString(r.URL.Path)
+	task.Id, _ = GetIdFromRequestString(r.URL.Path)
 
 	if task.Id == 0 {
 		w.WriteHeader(http.StatusBadRequest)
@@ -188,7 +186,7 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var t Task
-	t.Id, _ = getIdFromRequestString(r.URL.Path)
+	t.Id, _ = GetIdFromRequestString(r.URL.Path)
 	if t.Id == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "{ \"message\": \"Invalid request\"}")
@@ -292,7 +290,7 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	id, _ := getIdFromRequestString(r.URL.Path)
+	id, _ := GetIdFromRequestString(r.URL.Path)
 	stmt, err := database.Db.Prepare(fmt.Sprintf("DELETE FROM %s WHERE id = ?", tableName))
 
 	if err != nil {
@@ -314,10 +312,4 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, id)
-}
-
-func getIdFromRequestString(url string) (int, error) {
-	vars := strings.Split(url, "/")
-
-	return strconv.Atoi(vars[len(vars)-1])
 }
