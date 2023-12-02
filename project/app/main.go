@@ -22,6 +22,9 @@ var routes = []route{
 	newRoute("GET", "/banners", controllers.GetAllBanners),
 	newRoute("GET", "/banners/([0-9]+)", controllers.GetBanner),
 	newRoute("GET", "/add_banner_to_slot/([\\S]+)", controllers.AddBannerToSlot),
+	newRoute("GET", "/remove_banner_from_slot/([\\S]+)", controllers.RemoveBannerFromSlot),
+	newRoute("GET", "/get_banner_for_show/([\\S]+)", controllers.RemoveBannerFromSlot),
+	newRoute("GET", "/get_banner_for_show/([\\S]+)", controllers.GetBannerForShow),
 
 	newRoute("GET", "/tasks", controllers.GetAllHandler),
 	newRoute("POST", "/tasks", controllers.CreateHandler),

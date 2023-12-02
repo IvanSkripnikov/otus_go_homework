@@ -95,5 +95,6 @@ CREATE TABLE IF NOT EXISTS `relations_banner_slot` (
     `id`         BIGINT NOT NULL AUTO_INCREMENT,
     `banner_id`  INTEGER,
     `slot_id`    INTEGER,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    UNIQUE(`banner_id`, `slot_id`)
 );

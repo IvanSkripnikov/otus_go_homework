@@ -29,10 +29,10 @@ services:
     restart: always
     volumes:
       - type: volume
-        source: db-data4
+        source: db-data5
         target: /var/lib/mysql
         volume:
           nocopy: true
 
 volumes:
-  db-data4:
+  db-data5:

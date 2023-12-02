@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"app/database"
+	"app/models"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -144,6 +145,63 @@ func AddBannerToSlot(w http.ResponseWriter, r *http.Request) {
 		log.Println(err.Error())
 		return
 	}
+}
+
+func RemoveBannerFromSlot(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	bannerId, slotId, resultString := GetIdsFromQueryString(r.URL.Path)
+
+	if resultString != "" {
+		log.Println(resultString)
+		fmt.Fprint(w, resultString)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	stmt, err := database.Db.Prepare(fmt.Sprintf("DELETE FROM %s WHERE banner_id=? AND slot_id=?", "relations_banner_slot"))
+
+	if err != nil {
+		log.Println(err.Error())
+		fmt.Fprint(w, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(bannerId, slotId)
+
+	if err != nil {
+		log.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, err = fmt.Fprint(w, "{ \"message\": \"Successfully added!\"}")
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+}
+
+func GetBannerForShow(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	slotId, groupId, resultString := GetIdsFromQueryString(r.URL.Path)
+
+	if resultString != "" {
+		log.Println(resultString)
+		fmt.Fprint(w, resultString)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	bannerId := models.GetNeedBanned(slotId, groupId)
+
+	fmt.Fprint(w, strconv.Itoa(bannerId))
 }
 
 func GetIdFromRequestString(url string) (int, error) {
