@@ -1,23 +1,16 @@
-FROM golang:1.20 AS builder
-
-ENV GOOS=linux
-ENV GOARCH=amd64
+FROM golang:1.20-alpine
 
 WORKDIR /go/src/app
 
-# Copy go.mod and go.sum
-COPY app/go.* ./
+RUN apk update && \
+    apk add git && \
+    apk add --no-cache alpine-conf
 
-RUN go mod download
+ADD ./app /go/src/app
 
-COPY app/ ./
+RUN cd /go/src/app && \
+    go install app
 
-RUN go build -o main .
+ENTRYPOINT ["/go/bin/app"]
 
-FROM gcr.io/distroless/static-debian11
-
-COPY --from=builder /go/src/app/main /main
-
-EXPOSE 8080
-
-CMD [ "./main" ]
+WORKDIR "/go"

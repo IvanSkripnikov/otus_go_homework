@@ -20,6 +20,7 @@ func initHTTPServer() error {
 var routes = []route{
 	newRoute("GET", "/", controllers.HelloPage),
 	newRoute("GET", "/tasks", controllers.GetAllHandler),
+	newRoute("GET", "/banners", controllers.GetAllBanners),
 	newRoute("POST", "/tasks", controllers.CreateHandler),
 	newRoute("GET", "/tasks/([0-9]+)", controllers.GetHandler),
 	newRoute("PUT", "/tasks/([0-9]+)", controllers.UpdateHandler),
