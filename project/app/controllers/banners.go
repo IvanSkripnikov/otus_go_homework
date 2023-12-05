@@ -204,6 +204,21 @@ func GetBannerForShow(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, strconv.Itoa(bannerId))
 }
 
+func EventClick(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	_, _, resultString := GetIdsFromQueryString(r.URL.Path)
+
+	if resultString != "" {
+		log.Println(resultString)
+		fmt.Fprint(w, resultString)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	fmt.Fprint(w, r)
+}
+
 func GetIdFromRequestString(url string) (int, error) {
 	vars := strings.Split(url, "/")
 
