@@ -119,7 +119,8 @@ func AddBannerToSlot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stmt, err := database.Db.Prepare(fmt.Sprintf("INSERT INTO %s (banner_id, slot_id) VALUES (?, ?)", "relations_banner_slot"))
+	query := fmt.Sprintf("INSERT INTO %s (banner_id, slot_id) VALUES (?, ?)", "relations_banner_slot")
+	stmt, err := database.Db.Prepare(query)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -140,7 +141,7 @@ func AddBannerToSlot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	_, err = fmt.Fprint(w, "{ \"message\": \"Successfully added!\"}")
+	_, err = fmt.Fprint(w, "{\"message\": \"Successfully added!\"}")
 	if err != nil {
 		log.Println(err.Error())
 		return
@@ -181,7 +182,7 @@ func RemoveBannerFromSlot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	_, err = fmt.Fprint(w, "{ \"message\": \"Successfully added!\"}")
+	_, err = fmt.Fprint(w, "{\"message\": \"Successfully removed!\"}")
 	if err != nil {
 		log.Println(err.Error())
 		return
@@ -220,7 +221,8 @@ func EventClick(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stmt, err := database.Db.Prepare(fmt.Sprintf("INSERT INTO %s (`type`, `banner_id`, `slot_id`, `group_id`) VALUES (?, ?, ?, ?)", "events"))
+	query := fmt.Sprintf("INSERT INTO %s (`type`, `banner_id`, `slot_id`, `group_id`) VALUES (?, ?, ?, ?)", "events")
+	stmt, err := database.Db.Prepare(query)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -275,8 +277,34 @@ func GetIdsFromQueryString(url string) (map[string]int, string) {
 }
 
 func wrongParamsResponse(w http.ResponseWriter) {
-	resultString := "{ \"message\": \"Invalid request GetHandler\"}"
+	resultString := "{\"message\": \"Invalid request GetHandler\"}"
 	log.Println(resultString)
 	fmt.Fprint(w, resultString)
 	w.WriteHeader(http.StatusBadRequest)
 }
+
+/*
+func executeQuery(w http.ResponseWriter, query string, ids ...int) bool {
+	stmt, err := database.Db.Prepare(query)
+
+	if err != nil {
+		log.Println(err.Error())
+		fmt.Fprint(w, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return false
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec("click", pq.Array(ids))
+
+	if err != nil {
+		log.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err)
+		return false
+	}
+
+	return true
+}
+*/
