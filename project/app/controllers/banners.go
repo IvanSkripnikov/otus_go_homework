@@ -110,9 +110,20 @@ func GetBanner(w http.ResponseWriter, r *http.Request) {
 func AddBannerToSlot(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	bannerId, slotId, resultString := GetIdsFromQueryString(r.URL.Path)
+	params, resultString := GetIdsFromQueryString(r.URL.Path)
 
 	if resultString != "" {
+		log.Println(resultString)
+		fmt.Fprint(w, resultString)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	slotId, okSlot := params["slot"]
+	bannerId, okBanner := params["banner"]
+
+	if !okSlot || !okBanner {
+		resultString = "wrong params"
 		log.Println(resultString)
 		fmt.Fprint(w, resultString)
 		w.WriteHeader(http.StatusBadRequest)
@@ -150,9 +161,20 @@ func AddBannerToSlot(w http.ResponseWriter, r *http.Request) {
 func RemoveBannerFromSlot(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	bannerId, slotId, resultString := GetIdsFromQueryString(r.URL.Path)
+	params, resultString := GetIdsFromQueryString(r.URL.Path)
 
 	if resultString != "" {
+		log.Println(resultString)
+		fmt.Fprint(w, resultString)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	slotId, okSlot := params["slot"]
+	bannerId, okBanner := params["banner"]
+
+	if !okSlot || !okBanner {
+		resultString = "wrong params"
 		log.Println(resultString)
 		fmt.Fprint(w, resultString)
 		w.WriteHeader(http.StatusBadRequest)
@@ -190,9 +212,20 @@ func RemoveBannerFromSlot(w http.ResponseWriter, r *http.Request) {
 func GetBannerForShow(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	slotId, groupId, resultString := GetIdsFromQueryString(r.URL.Path)
+	params, resultString := GetIdsFromQueryString(r.URL.Path)
 
 	if resultString != "" {
+		log.Println(resultString)
+		fmt.Fprint(w, resultString)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	slotId, okSlot := params["slot"]
+	groupId, okGroup := params["group"]
+
+	if !okSlot || !okGroup {
+		resultString = "wrong params"
 		log.Println(resultString)
 		fmt.Fprint(w, resultString)
 		w.WriteHeader(http.StatusBadRequest)
@@ -207,12 +240,44 @@ func GetBannerForShow(w http.ResponseWriter, r *http.Request) {
 func EventClick(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	_, _, resultString := GetIdsFromQueryString(r.URL.Path)
+	params, resultString := GetIdsFromQueryString(r.URL.Path)
 
 	if resultString != "" {
 		log.Println(resultString)
 		fmt.Fprint(w, resultString)
 		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	slotId, okSlot := params["slot"]
+	groupId, okGroup := params["group"]
+	bannerId, okBanner := params["banner"]
+
+	if !okSlot || !okGroup || !okBanner {
+		resultString = "wrong params"
+		log.Println(resultString)
+		fmt.Fprint(w, resultString)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	stmt, err := database.Db.Prepare(fmt.Sprintf("INSERT INTO %s (`type`, `banner_id`, `slot_id`, `group_id`) VALUES (?, ?, ?, ?)", "events"))
+
+	if err != nil {
+		log.Println(err.Error())
+		fmt.Fprint(w, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec("click", bannerId, slotId, groupId)
+
+	if err != nil {
+		log.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err)
 		return
 	}
 
@@ -225,31 +290,27 @@ func GetIdFromRequestString(url string) (int, error) {
 	return strconv.Atoi(vars[len(vars)-1])
 }
 
-func GetIdsFromQueryString(url string) (int, int, string) {
-	bannerId := 0
-	slotId := 0
+func GetIdsFromQueryString(url string) (map[string]int, string) {
+	resultMap := map[string]int{}
+
 	outMessage := ""
 	queryParams := strings.Split(url, "/")
 
 	params := strings.Split(queryParams[len(queryParams)-1], "&")
 	if len(params) == 1 {
 		outMessage = "not all params is set"
-		return bannerId, slotId, outMessage
+		return resultMap, outMessage
 	}
 
 	for _, v := range params {
 		pair := strings.Split(v, "=")
 		if len(pair) == 1 {
 			outMessage = "incorrect params value: " + v
-			return bannerId, slotId, outMessage
-		}
-		if pair[0] == "banner" {
-			bannerId, _ = strconv.Atoi(pair[1])
-		}
-		if pair[0] == "slot" {
-			slotId, _ = strconv.Atoi(pair[1])
+			return resultMap, outMessage
+		} else {
+			resultMap[pair[0]], _ = strconv.Atoi(pair[1])
 		}
 	}
 
-	return bannerId, slotId, outMessage
+	return resultMap, outMessage
 }

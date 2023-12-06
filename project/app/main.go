@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 func initHTTPServer() error {
@@ -20,7 +21,7 @@ func initHTTPServer() error {
 var routes = []route{
 	newRoute("GET", "/", controllers.HelloPage),
 	newRoute("GET", "/banners", controllers.GetAllBanners),
-	newRoute("GET", "/banners/([0-9]+)", controllers.GetBanner),
+	newRoute("POST", "/banners/([0-9]+)", controllers.GetBanner),
 	newRoute("GET", "/add_banner_to_slot/([\\S]+)", controllers.AddBannerToSlot),
 	newRoute("GET", "/remove_banner_from_slot/([\\S]+)", controllers.RemoveBannerFromSlot),
 	newRoute("GET", "/get_banner_for_show/([\\S]+)", controllers.GetBannerForShow),
@@ -45,6 +46,7 @@ type route struct {
 
 func Serve(w http.ResponseWriter, r *http.Request) {
 	var allow []string
+	found := false
 	for _, route := range routes {
 		matches := route.regex.FindStringSubmatch(r.URL.Path)
 		if len(matches) > 0 {
@@ -52,18 +54,20 @@ func Serve(w http.ResponseWriter, r *http.Request) {
 				allow = append(allow, route.method)
 				continue
 			}
-			//ctx := context.WithValue(r.Context(), ctxKey{}, matches[1:])
-			//route.handler(w, r.WithContext(ctx))
+			found = true
 			route.handler(w, r)
-
 		}
 	}
-	/*if len(allow) > 0 {
+	if !found && len(allow) == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		http.NotFound(w, r)
+		return
+	}
+	if len(allow) > 0 {
 		w.Header().Set("Allow", strings.Join(allow, ", "))
 		http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	http.NotFound(w, r)*/
 }
 
 func main() {
