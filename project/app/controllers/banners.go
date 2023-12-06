@@ -67,8 +67,7 @@ func GetBanner(w http.ResponseWriter, r *http.Request) {
 	banner.Id, _ = GetIdFromRequestString(r.URL.Path)
 
 	if banner.Id == 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprint(w, "{ \"message\": \"Invalid request GetHandler\"}"+r.URL.Path)
+		wrongParamsResponse(w)
 		return
 	}
 
@@ -112,21 +111,11 @@ func AddBannerToSlot(w http.ResponseWriter, r *http.Request) {
 
 	params, resultString := GetIdsFromQueryString(r.URL.Path)
 
-	if resultString != "" {
-		log.Println(resultString)
-		fmt.Fprint(w, resultString)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
 	slotId, okSlot := params["slot"]
 	bannerId, okBanner := params["banner"]
 
-	if !okSlot || !okBanner {
-		resultString = "wrong params"
-		log.Println(resultString)
-		fmt.Fprint(w, resultString)
-		w.WriteHeader(http.StatusBadRequest)
+	if !okSlot || !okBanner || resultString != "" {
+		wrongParamsResponse(w)
 		return
 	}
 
@@ -163,21 +152,11 @@ func RemoveBannerFromSlot(w http.ResponseWriter, r *http.Request) {
 
 	params, resultString := GetIdsFromQueryString(r.URL.Path)
 
-	if resultString != "" {
-		log.Println(resultString)
-		fmt.Fprint(w, resultString)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
 	slotId, okSlot := params["slot"]
 	bannerId, okBanner := params["banner"]
 
-	if !okSlot || !okBanner {
-		resultString = "wrong params"
-		log.Println(resultString)
-		fmt.Fprint(w, resultString)
-		w.WriteHeader(http.StatusBadRequest)
+	if !okSlot || !okBanner || resultString != "" {
+		wrongParamsResponse(w)
 		return
 	}
 
@@ -214,21 +193,11 @@ func GetBannerForShow(w http.ResponseWriter, r *http.Request) {
 
 	params, resultString := GetIdsFromQueryString(r.URL.Path)
 
-	if resultString != "" {
-		log.Println(resultString)
-		fmt.Fprint(w, resultString)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
 	slotId, okSlot := params["slot"]
 	groupId, okGroup := params["group"]
 
-	if !okSlot || !okGroup {
-		resultString = "wrong params"
-		log.Println(resultString)
-		fmt.Fprint(w, resultString)
-		w.WriteHeader(http.StatusBadRequest)
+	if !okSlot || !okGroup || resultString != "" {
+		wrongParamsResponse(w)
 		return
 	}
 
@@ -242,22 +211,12 @@ func EventClick(w http.ResponseWriter, r *http.Request) {
 
 	params, resultString := GetIdsFromQueryString(r.URL.Path)
 
-	if resultString != "" {
-		log.Println(resultString)
-		fmt.Fprint(w, resultString)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
 	slotId, okSlot := params["slot"]
 	groupId, okGroup := params["group"]
 	bannerId, okBanner := params["banner"]
 
-	if !okSlot || !okGroup || !okBanner {
-		resultString = "wrong params"
-		log.Println(resultString)
-		fmt.Fprint(w, resultString)
-		w.WriteHeader(http.StatusBadRequest)
+	if !okSlot || !okGroup || !okBanner || resultString != "" {
+		wrongParamsResponse(w)
 		return
 	}
 
@@ -313,4 +272,11 @@ func GetIdsFromQueryString(url string) (map[string]int, string) {
 	}
 
 	return resultMap, outMessage
+}
+
+func wrongParamsResponse(w http.ResponseWriter) {
+	resultString := "{ \"message\": \"Invalid request GetHandler\"}"
+	log.Println(resultString)
+	fmt.Fprint(w, resultString)
+	w.WriteHeader(http.StatusBadRequest)
 }
