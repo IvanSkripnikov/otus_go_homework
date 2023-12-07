@@ -1,4 +1,4 @@
-package models
+package components
 
 func GetNeedBanned(slotId, groupId int) int {
 	bannerId := 0

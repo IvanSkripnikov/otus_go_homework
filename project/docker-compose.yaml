@@ -8,6 +8,10 @@ services:
     container_name: api
     env_file:
       - .env
+    depends_on:
+      - kafka
+    networks:
+      - kafka-network
     ports:
       - "8080:8080"
     stdin_open: true

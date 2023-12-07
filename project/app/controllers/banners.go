@@ -1,11 +1,13 @@
 package controllers
 
 import (
+	"app/components"
 	"app/database"
-	"app/models"
+	"app/kafka"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"strconv"
@@ -202,7 +204,7 @@ func GetBannerForShow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bannerId := models.GetNeedBanned(slotId, groupId)
+	bannerId := components.GetNeedBanned(slotId, groupId)
 
 	fmt.Fprint(w, strconv.Itoa(bannerId))
 }
@@ -223,6 +225,9 @@ func EventClick(w http.ResponseWriter, r *http.Request) {
 
 	query := fmt.Sprintf("INSERT INTO %s (`type`, `banner_id`, `slot_id`, `group_id`) VALUES (?, ?, ?, ?)", "events")
 	stmt, err := database.Db.Prepare(query)
+
+	// отправляем событие в кафку
+	sendEventToKafka("click", bannerId, slotId, groupId)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -281,6 +286,26 @@ func wrongParamsResponse(w http.ResponseWriter) {
 	log.Println(resultString)
 	fmt.Fprint(w, resultString)
 	w.WriteHeader(http.StatusBadRequest)
+}
+
+func sendEventToKafka(eventName string, bannerId, slotId, groupId int) {
+	message := kafka.Message{Type: eventName, BannerId: bannerId, SlotId: slotId, GroupId: groupId}
+
+	producer, err := kafka.SetupProducer()
+	if err != nil {
+		log.Fatalf("failed to initialize producer: %v", err)
+	}
+	defer producer.Close()
+
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.Default()
+	router.POST("/send", kafka.SendMessageHandler(producer, message))
+
+	fmt.Printf("Kafka PRODUCER 📨 started at http://localhost%s\n", kafka.ProducerPort)
+
+	if err := router.Run(kafka.ProducerPort); err != nil {
+		log.Printf("failed to run the server: %v", err)
+	}
 }
 
 /*
