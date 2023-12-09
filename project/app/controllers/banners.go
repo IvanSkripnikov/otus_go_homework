@@ -26,40 +26,31 @@ func GetAllBanners(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	rows, err := database.Db.Query(fmt.Sprintf("SELECT * from %s", "banners"))
 
-	if err != nil {
-		log.Println(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, err)
+	if checkError(w, err) {
 		return
 	}
 
 	defer rows.Close()
 
-	var tasks []Task
+	var banners []Banner
 	for rows.Next() {
-		task := Task{}
-		if err = rows.Scan(&task.Id, &task.Title, &task.Body, &task.CreatedAt, &task.UpdatedAt); err != nil {
+		banner := Banner{}
+		if err = rows.Scan(&banner.Id, &banner.Title, &banner.Body, &banner.CreatedAt, &banner.Active); err != nil {
 			log.Println(err.Error())
 			continue
 		}
-		tasks = append(tasks, task)
+		banners = append(banners, banner)
 	}
 
 	var buf bytes.Buffer
 	je := json.NewEncoder(&buf)
 
-	if err = je.Encode(&tasks); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, err)
+	err = je.Encode(&banners)
+	if checkError(w, err) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	_, err = fmt.Fprint(w, buf.String())
-	if err != nil {
-		log.Println(err.Error())
-		return
-	}
+	writeSuccess(w, buf.String())
 }
 
 func GetBanner(w http.ResponseWriter, r *http.Request) {
@@ -75,10 +66,7 @@ func GetBanner(w http.ResponseWriter, r *http.Request) {
 
 	stmt, err := database.Db.Prepare(fmt.Sprintf("SELECT * from %s WHERE id = ?", "banners"))
 
-	if err != nil {
-		log.Println(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, err)
+	if checkError(w, err) {
 		return
 	}
 
@@ -94,24 +82,18 @@ func GetBanner(w http.ResponseWriter, r *http.Request) {
 	var buf bytes.Buffer
 	je := json.NewEncoder(&buf)
 
-	if err = je.Encode(&banner); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, err)
+	err = je.Encode(&banner)
+	if checkError(w, err) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	_, err = fmt.Fprint(w, buf.String())
-	if err != nil {
-		log.Println(err.Error())
-		return
-	}
+	writeSuccess(w, buf.String())
 }
 
 func AddBannerToSlot(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	params, resultString := GetIdsFromQueryString(r.URL.Path)
+	params, resultString := GetParamsFromQueryString(r.URL.Path)
 
 	slotId, okSlot := params["slot"]
 	bannerId, okBanner := params["banner"]
@@ -124,10 +106,7 @@ func AddBannerToSlot(w http.ResponseWriter, r *http.Request) {
 	query := fmt.Sprintf("INSERT INTO %s (banner_id, slot_id) VALUES (?, ?)", "relations_banner_slot")
 	stmt, err := database.Db.Prepare(query)
 
-	if err != nil {
-		log.Println(err.Error())
-		fmt.Fprint(w, err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+	if checkError(w, err) {
 		return
 	}
 
@@ -135,25 +114,17 @@ func AddBannerToSlot(w http.ResponseWriter, r *http.Request) {
 
 	_, err = stmt.Exec(bannerId, slotId)
 
-	if err != nil {
-		log.Println(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, err)
+	if checkError(w, err) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	_, err = fmt.Fprint(w, "{\"message\": \"Successfully added!\"}")
-	if err != nil {
-		log.Println(err.Error())
-		return
-	}
+	writeSuccess(w, "{\"message\": \"Successfully added!\"}")
 }
 
 func RemoveBannerFromSlot(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	params, resultString := GetIdsFromQueryString(r.URL.Path)
+	params, resultString := GetParamsFromQueryString(r.URL.Path)
 
 	slotId, okSlot := params["slot"]
 	bannerId, okBanner := params["banner"]
@@ -165,10 +136,7 @@ func RemoveBannerFromSlot(w http.ResponseWriter, r *http.Request) {
 
 	stmt, err := database.Db.Prepare(fmt.Sprintf("DELETE FROM %s WHERE banner_id=? AND slot_id=?", "relations_banner_slot"))
 
-	if err != nil {
-		log.Println(err.Error())
-		fmt.Fprint(w, err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+	if checkError(w, err) {
 		return
 	}
 
@@ -176,25 +144,17 @@ func RemoveBannerFromSlot(w http.ResponseWriter, r *http.Request) {
 
 	_, err = stmt.Exec(bannerId, slotId)
 
-	if err != nil {
-		log.Println(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, err)
+	if checkError(w, err) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	_, err = fmt.Fprint(w, "{\"message\": \"Successfully removed!\"}")
-	if err != nil {
-		log.Println(err.Error())
-		return
-	}
+	writeSuccess(w, "{\"message\": \"Successfully removed!\"}")
 }
 
 func GetBannerForShow(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	params, resultString := GetIdsFromQueryString(r.URL.Path)
+	params, resultString := GetParamsFromQueryString(r.URL.Path)
 
 	slotId, okSlot := params["slot"]
 	groupId, okGroup := params["group"]
@@ -212,7 +172,7 @@ func GetBannerForShow(w http.ResponseWriter, r *http.Request) {
 func EventClick(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	params, resultString := GetIdsFromQueryString(r.URL.Path)
+	params, resultString := GetParamsFromQueryString(r.URL.Path)
 
 	slotId, okSlot := params["slot"]
 	groupId, okGroup := params["group"]
@@ -229,10 +189,7 @@ func EventClick(w http.ResponseWriter, r *http.Request) {
 	// отправляем событие в кафку
 	sendEventToKafka("click", bannerId, slotId, groupId)
 
-	if err != nil {
-		log.Println(err.Error())
-		fmt.Fprint(w, err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+	if checkError(w, err) {
 		return
 	}
 
@@ -240,10 +197,7 @@ func EventClick(w http.ResponseWriter, r *http.Request) {
 
 	_, err = stmt.Exec("click", bannerId, slotId, groupId)
 
-	if err != nil {
-		log.Println(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, err)
+	if checkError(w, err) {
 		return
 	}
 
@@ -256,7 +210,7 @@ func GetIdFromRequestString(url string) (int, error) {
 	return strconv.Atoi(vars[len(vars)-1])
 }
 
-func GetIdsFromQueryString(url string) (map[string]int, string) {
+func GetParamsFromQueryString(url string) (map[string]int, string) {
 	resultMap := map[string]int{}
 
 	outMessage := ""
@@ -305,6 +259,26 @@ func sendEventToKafka(eventName string, bannerId, slotId, groupId int) {
 
 	if err := router.Run(kafka.ProducerPort); err != nil {
 		log.Printf("failed to run the server: %v", err)
+	}
+}
+
+func checkError(w http.ResponseWriter, err error) bool {
+	if err != nil {
+		log.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err)
+		return true
+	}
+
+	return false
+}
+
+func writeSuccess(w http.ResponseWriter, message string) {
+	w.WriteHeader(http.StatusOK)
+	_, err := fmt.Fprint(w, message)
+	if err != nil {
+		log.Println(err.Error())
+		return
 	}
 }
 
