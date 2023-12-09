@@ -4,6 +4,7 @@ import (
 	"app/components"
 	"app/database"
 	"app/kafka"
+	"app/models"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -13,14 +14,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-type Banner struct {
-	Id        int
-	Title     string
-	Body      string
-	CreatedAt string
-	Active    bool
-}
 
 func GetAllBanners(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -32,9 +25,9 @@ func GetAllBanners(w http.ResponseWriter, r *http.Request) {
 
 	defer rows.Close()
 
-	var banners []Banner
+	var banners []models.Banner
 	for rows.Next() {
-		banner := Banner{}
+		banner := models.Banner{}
 		if err = rows.Scan(&banner.Id, &banner.Title, &banner.Body, &banner.CreatedAt, &banner.Active); err != nil {
 			log.Println(err.Error())
 			continue
@@ -56,7 +49,7 @@ func GetAllBanners(w http.ResponseWriter, r *http.Request) {
 func GetBanner(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var banner Banner
+	var banner models.Banner
 	banner.Id, _ = GetIdFromRequestString(r.URL.Path)
 
 	if banner.Id == 0 {
