@@ -21,7 +21,7 @@ func GetNeedBanned(slotId, groupId int) int {
 		allShows := float64(GetShows())
 		averageRating := allClickBanner / allShowsBanner
 
-		rate := getRating(averageRating, allShowsBanner, allShows)
+		rate := GetRating(averageRating, allShowsBanner, allShows)
 
 		fmt.Println(rate)
 	}
@@ -30,7 +30,8 @@ func GetNeedBanned(slotId, groupId int) int {
 }
 
 func GetShows() int {
-	stmt, err := database.Db.Prepare(fmt.Sprintf("SELECT COUNT(*) from %s WHERE type = %s", "events", "show"))
+	query := "SELECT COUNT(*) from events WHERE type = 'show'"
+	stmt, err := database.Db.Query(query)
 
 	if err != nil {
 		return 0
@@ -39,15 +40,19 @@ func GetShows() int {
 	defer stmt.Close()
 
 	count := 0
-	if err = stmt.QueryRow().Scan(&count); err != nil {
-		return 0
+
+	for stmt.Next() {
+		if err := stmt.Scan(&count); err != nil {
+			return 0
+		}
 	}
 
-	return 0
+	return count
 }
 
 func GetBannerEvents(bannerId int, eventType string) int {
-	stmt, err := database.Db.Prepare(fmt.Sprintf("SELECT COUNT(*) from %s WHERE id = ? AND type = ?", "events"))
+	query := "SELECT COUNT(*) from events WHERE banner_id = ? AND type = ?"
+	stmt, err := database.Db.Query(query, bannerId, eventType)
 
 	if err != nil {
 		return 0
@@ -56,15 +61,19 @@ func GetBannerEvents(bannerId int, eventType string) int {
 	defer stmt.Close()
 
 	count := 0
-	if err = stmt.QueryRow(bannerId, eventType).Scan(&count); err != nil {
-		return 0
+
+	for stmt.Next() {
+		if err := stmt.Scan(&count); err != nil {
+			return 0
+		}
 	}
 
-	return 0
+	return count
 }
 
-func GetSlotBanners(slotTd int) ([]int, error) {
-	rows, err := database.Db.Query(fmt.Sprintf("SELECT banner_id from %s WHERE slot_id = ?", "relations_banner_slot"), slotTd)
+func GetSlotBanners(slotId int) ([]int, error) {
+	query := "SELECT banner_id from relations_banner_slot WHERE slot_id = ?"
+	rows, err := database.Db.Query(query, slotId)
 
 	if err != nil {
 		return nil, err
@@ -85,6 +94,6 @@ func GetSlotBanners(slotTd int) ([]int, error) {
 	return banners, nil
 }
 
-func getRating(averageRating float64, currentCount float64, allCounts float64) float32 {
-	return float32(averageRating + (math.Sqrt((2 * math.Log(allCounts)) / currentCount)))
+func GetRating(averageRating float64, currentCount float64, allCounts float64) float64 {
+	return averageRating + (math.Sqrt((2 * math.Log(allCounts)) / currentCount))
 }

@@ -35,7 +35,7 @@ services:
       - kafka-network
     volumes:
       - type: volume
-        source: db-data5
+        source: db-data8
         target: /var/lib/mysql
         volume:
           nocopy: true
@@ -66,4 +66,4 @@ networks:
     driver: bridge
 
 volumes:
-  db-data5:
+  db-data8:
