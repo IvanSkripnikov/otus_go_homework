@@ -1,8 +1,7 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
+	"app/controllers"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -10,33 +9,35 @@ import (
 )
 
 func TestRoot(t *testing.T) {
-	expect := Response{Message: "Welcome to the Go REST API!"}
-
-	ts := httptest.NewServer(SetupServer())
-
-	defer ts.Close()
-
-	res, err := http.Get(fmt.Sprintf("%s/", ts.URL))
-
-	if err != nil {
-		t.Errorf("Expected no error, got %s\n", err.Error())
-	}
-
+	expected := "{\"message\": \"Hello dear friend! Welcome!\"}"
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
+	controllers.HelloPage(w, req)
+	res := w.Result()
 	defer res.Body.Close()
 
-	if res.StatusCode != http.StatusOK {
-		t.Errorf("Expected status code 200, got %d\n", res.StatusCode)
-	}
-
-	var resData Response
-	byteData, _ := ioutil.ReadAll(res.Body)
-	err = json.Unmarshal(byteData, &resData)
-
+	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		t.Errorf("Failed parsing json, got %s\n", err.Error())
+		t.Errorf("Error: %v", err)
 	}
+	if string(data) != expected {
+		t.Errorf("Expected root message but got %v", string(data))
+	}
+}
 
-	if resData != expect {
-		t.Fatalf("Expected root message, got %v\n", resData)
+func TestBanners(t *testing.T) {
+	expected := "{\"message\": \"Hello dear friend! Welcome!\"}"
+	req := httptest.NewRequest(http.MethodGet, "/banners", nil)
+	w := httptest.NewRecorder()
+	controllers.GetAllBanners(w, req)
+	res := w.Result()
+	defer res.Body.Close()
+
+	data, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("Error: %v", err)
+	}
+	if string(data) != expected {
+		t.Errorf("Expected banners message but got %v", string(data))
 	}
 }
