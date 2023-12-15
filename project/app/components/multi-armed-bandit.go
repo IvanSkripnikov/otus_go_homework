@@ -31,7 +31,7 @@ func GetNeedBanned(slotId, groupId int) int {
 
 func GetShows() int {
 	query := "SELECT COUNT(*) from events WHERE type = 'show'"
-	stmt, err := database.Db.Query(query)
+	stmt, err := database.DB.Query(query)
 
 	if err != nil {
 		return 0
@@ -52,7 +52,7 @@ func GetShows() int {
 
 func GetBannerEvents(bannerId int, eventType string) int {
 	query := "SELECT COUNT(*) from events WHERE banner_id = ? AND type = ?"
-	stmt, err := database.Db.Query(query, bannerId, eventType)
+	stmt, err := database.DB.Query(query, bannerId, eventType)
 
 	if err != nil {
 		return 0
@@ -73,7 +73,7 @@ func GetBannerEvents(bannerId int, eventType string) int {
 
 func GetSlotBanners(slotId int) ([]int, error) {
 	query := "SELECT banner_id from relations_banner_slot WHERE slot_id = ?"
-	rows, err := database.Db.Query(query, slotId)
+	rows, err := database.DB.Query(query, slotId)
 
 	if err != nil {
 		return nil, err

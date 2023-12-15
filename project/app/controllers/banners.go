@@ -17,7 +17,7 @@ import (
 
 func GetAllBanners(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	rows, err := database.Db.Query(fmt.Sprintf("SELECT * from %s", "banners"))
+	rows, err := database.DB.Query(fmt.Sprintf("SELECT * from %s", "banners"))
 
 	if checkError(w, err) {
 		return
@@ -57,7 +57,7 @@ func GetBanner(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stmt, err := database.Db.Prepare(fmt.Sprintf("SELECT * from %s WHERE id = ?", "banners"))
+	stmt, err := database.DB.Prepare(fmt.Sprintf("SELECT * from %s WHERE id = ?", "banners"))
 
 	if checkError(w, err) {
 		return
@@ -97,7 +97,7 @@ func AddBannerToSlot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := fmt.Sprintf("INSERT INTO %s (banner_id, slot_id) VALUES (?, ?)", "relations_banner_slot")
-	stmt, err := database.Db.Prepare(query)
+	stmt, err := database.DB.Prepare(query)
 
 	if checkError(w, err) {
 		return
@@ -127,7 +127,7 @@ func RemoveBannerFromSlot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stmt, err := database.Db.Prepare(fmt.Sprintf("DELETE FROM %s WHERE banner_id=? AND slot_id=?", "relations_banner_slot"))
+	stmt, err := database.DB.Prepare(fmt.Sprintf("DELETE FROM %s WHERE banner_id=? AND slot_id=?", "relations_banner_slot"))
 
 	if checkError(w, err) {
 		return
@@ -177,7 +177,7 @@ func EventClick(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := fmt.Sprintf("INSERT INTO %s (`type`, `banner_id`, `slot_id`, `group_id`) VALUES (?, ?, ?, ?)", "events")
-	stmt, err := database.Db.Prepare(query)
+	stmt, err := database.DB.Prepare(query)
 
 	// отправляем событие в кафку
 	sendEventToKafka("click", bannerId, slotId, groupId)

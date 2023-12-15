@@ -34,7 +34,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stmt, err := database.Db.Prepare(fmt.Sprintf("SELECT * from %s WHERE id = ?", tableName))
+	stmt, err := database.DB.Prepare(fmt.Sprintf("SELECT * from %s WHERE id = ?", tableName))
 
 	if err != nil {
 		log.Println(err.Error())
@@ -71,7 +71,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 
 func GetAllHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	rows, err := database.Db.Query(fmt.Sprintf("SELECT * from %s", tableName))
+	rows, err := database.DB.Query(fmt.Sprintf("SELECT * from %s", tableName))
 
 	if err != nil {
 		log.Println(err.Error())
@@ -133,7 +133,7 @@ func CreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stmt, err := database.Db.Prepare(fmt.Sprintf("INSERT INTO %s (title, body, created_at, updated_at) VALUES (?, ?, ?, ?)", tableName))
+	stmt, err := database.DB.Prepare(fmt.Sprintf("INSERT INTO %s (title, body, created_at, updated_at) VALUES (?, ?, ?, ?)", tableName))
 
 	if err != nil {
 		log.Println(err.Error())
@@ -220,7 +220,7 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	t.UpdatedAt = time.Now().Format("2006-01-02 15:04:05")
 
 	if t.Title != "" && t.Body != "" {
-		stmt, err := database.Db.Prepare(fmt.Sprintf("UPDATE %s SET title = ?, body = ?, updated_at = ? WHERE id = ?", tableName))
+		stmt, err := database.DB.Prepare(fmt.Sprintf("UPDATE %s SET title = ?, body = ?, updated_at = ? WHERE id = ?", tableName))
 		if err != nil {
 			log.Println(err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -239,7 +239,7 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else if t.Title != "" {
-		stmt, err := database.Db.Prepare(fmt.Sprintf("UPDATE %s SET title = ?, updated_at = ? WHERE id = ?", tableName))
+		stmt, err := database.DB.Prepare(fmt.Sprintf("UPDATE %s SET title = ?, updated_at = ? WHERE id = ?", tableName))
 		if err != nil {
 			log.Println(err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -258,7 +258,7 @@ func UpdateHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else if t.Body != "" {
-		stmt, err := database.Db.Prepare(fmt.Sprintf("UPDATE %s SET body = ?, updated_at = ? WHERE id = ?", tableName))
+		stmt, err := database.DB.Prepare(fmt.Sprintf("UPDATE %s SET body = ?, updated_at = ? WHERE id = ?", tableName))
 		if err != nil {
 			log.Println(err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -291,7 +291,7 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	id, _ := GetIdFromRequestString(r.URL.Path)
-	stmt, err := database.Db.Prepare(fmt.Sprintf("DELETE FROM %s WHERE id = ?", tableName))
+	stmt, err := database.DB.Prepare(fmt.Sprintf("DELETE FROM %s WHERE id = ?", tableName))
 
 	if err != nil {
 		log.Println(err.Error())

@@ -5,40 +5,41 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
+	"os"
 )
 
-var (
-	user   string
-	pass   string
-	dbName string
-	Db     *sql.DB
-)
+var DB *sql.DB
 
 func init() {
+	DB = InitDataBase()
+}
+
+func InitDataBase() *sql.DB {
 	fmt.Println("connecting ...")
 
-	/*
-		user = os.Getenv("MYSQL_USER")
-		pass = os.Getenv("MYSQL_PASSWORD")
-		dbName = os.Getenv("MYSQL_DATABASE")
-	*/
-
-	user = "user"
-	pass = "pass"
-	dbName = "test"
-
-	if user == "" || pass == "" || dbName == "" {
-		log.Fatal("user or pass or dbName does not found.")
+	// get environment variables
+	env := func(key, defaultValue string) string {
+		if value := os.Getenv(key); value != "" {
+			return value
+		}
+		return defaultValue
 	}
 
-	dsn := fmt.Sprintf("%s:%s@tcp(db:3306)/%s", user, pass, dbName)
+	user := env("MYSQL_USER", "user")
+	pass := env("MYSQL_PASSWORD", "pass")
+	prot := env("MYSQL_PROT", "tcp")
+	addr := env("MYSQL_ADDR", "localhost:3306")
+	dbname := env("MYSQL_DATABASE", "test")
+	netAddr := fmt.Sprintf("%s(%s)", prot, addr)
+	dsn := fmt.Sprintf("%s:%s@%s/%s?timeout=30s", user, pass, netAddr, dbname)
 
-	var err error
-	Db, err = sql.Open("mysql", dsn)
+	db, err := sql.Open("mysql", dsn)
 
 	if err != nil {
 		log.Fatal("DB connection has been failed.", err.Error())
 	}
 
 	fmt.Println("connected!!")
+
+	return db
 }
