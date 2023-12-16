@@ -70,10 +70,26 @@ func Serve(w http.ResponseWriter, r *http.Request) {
 func GetHttpHandler() *http.ServeMux {
 	httpHandler := http.NewServeMux()
 
-	httpHandler.HandleFunc("/banners/", controllers.BannerHandler)
-	httpHandler.HandleFunc("/banners", controllers.BannersHandler)
+	for _, route := range routes {
+		httpHandler.HandleFunc(handleRegexp(route.regex), route.handler)
+	}
 
 	return httpHandler
+}
+
+func handleRegexp(regExp *regexp.Regexp) string {
+	expr := regExp.String()[1 : len(regExp.String())-1]
+
+	result := ""
+	if strings.Count(expr, "/") > 1 {
+		parts := strings.Split(expr, "/")
+		parts = parts[:len(parts)-1]
+		result = strings.Join(parts, "/") + "/"
+	} else {
+		result = expr
+	}
+
+	return result
 }
 
 func main() {

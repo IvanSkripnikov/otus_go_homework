@@ -1,11 +1,12 @@
 package main
 
 import (
-	"app/controllers"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"app/controllers"
 
 	"github.com/gavv/httpexpect/v2"
 )
@@ -51,4 +52,17 @@ func TestBanners(t *testing.T) {
 	e.GET("/banners").
 		Expect().
 		Status(http.StatusOK).JSON().Array().NotEmpty()
+}
+
+func TestGetBannerForShow(t *testing.T) {
+	handler := GetHttpHandler()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	e := httpexpect.Default(t, server.URL)
+
+	e.GET("/get_banner_for_show/slot=1&group=1").
+		Expect().
+		Status(http.StatusOK).Raw()
 }

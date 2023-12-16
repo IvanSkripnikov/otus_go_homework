@@ -1,8 +1,9 @@
 package controllers
 
 import (
-	"app/helpers"
 	"net/http"
+
+	"app/helpers"
 )
 
 func BannersHandler(w http.ResponseWriter, r *http.Request) {

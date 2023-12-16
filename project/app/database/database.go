@@ -1,11 +1,13 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"log"
 	"os"
+
+	"database/sql"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var DB *sql.DB
@@ -26,7 +28,7 @@ func InitDataBase() *sql.DB {
 	}
 
 	host := "db"
-	// host = "localhost"
+	host = "localhost"
 	user := env("MYSQL_USER", "user")
 	pass := env("MYSQL_PASSWORD", "pass")
 	prot := env("MYSQL_PROT", "tcp")

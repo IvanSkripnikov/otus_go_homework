@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"app/kafka"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -12,6 +11,7 @@ import (
 
 	"app/components"
 	"app/database"
+	"app/kafka"
 	"app/models"
 
 	"github.com/gin-gonic/gin"
