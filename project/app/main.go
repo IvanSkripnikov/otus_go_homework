@@ -8,6 +8,30 @@ import (
 	"strings"
 )
 
+type route struct {
+	method  string
+	regex   *regexp.Regexp
+	handler http.HandlerFunc
+}
+
+var (
+	routes = []route{
+		newRoute("GET", "/", controllers.HelloPage),
+		newRoute("GET", "/banners", controllers.GetAllBanners),
+		newRoute("GET", "/banners/([0-9]+)", controllers.GetBanner),
+		newRoute("GET", "/add_banner_to_slot/([\\S]+)", controllers.AddBannerToSlot),
+		newRoute("GET", "/remove_banner_from_slot/([\\S]+)", controllers.RemoveBannerFromSlot),
+		newRoute("GET", "/get_banner_for_show/([\\S]+)", controllers.GetBannerForShow),
+		newRoute("GET", "/event_click/([\\S]+)", controllers.EventClick),
+
+		newRoute("GET", "/tasks", controllers.GetAllHandler),
+		newRoute("POST", "/tasks", controllers.CreateHandler),
+		newRoute("GET", "/tasks/([0-9]+)", controllers.GetHandler),
+		newRoute("PUT", "/tasks/([0-9]+)", controllers.UpdateHandler),
+		newRoute("DELETE", "/tasks/([0-9]+)", controllers.DeleteHandler),
+	}
+)
+
 func initHTTPServer() error {
 	http.HandleFunc("/", Serve)
 	err := http.ListenAndServe(":8080", nil)
@@ -18,30 +42,8 @@ func initHTTPServer() error {
 	return nil
 }
 
-var routes = []route{
-	newRoute("GET", "/", controllers.HelloPage),
-	newRoute("GET", "/banners", controllers.GetAllBanners),
-	newRoute("GET", "/banners/([0-9]+)", controllers.GetBanner),
-	newRoute("GET", "/add_banner_to_slot/([\\S]+)", controllers.AddBannerToSlot),
-	newRoute("GET", "/remove_banner_from_slot/([\\S]+)", controllers.RemoveBannerFromSlot),
-	newRoute("GET", "/get_banner_for_show/([\\S]+)", controllers.GetBannerForShow),
-	newRoute("GET", "/event_click/([\\S]+)", controllers.EventClick),
-
-	newRoute("GET", "/tasks", controllers.GetAllHandler),
-	newRoute("POST", "/tasks", controllers.CreateHandler),
-	newRoute("GET", "/tasks/([0-9]+)", controllers.GetHandler),
-	newRoute("PUT", "/tasks/([0-9]+)", controllers.UpdateHandler),
-	newRoute("DELETE", "/tasks/([0-9]+)", controllers.DeleteHandler),
-}
-
 func newRoute(method, pattern string, handler http.HandlerFunc) route {
 	return route{method, regexp.MustCompile("^" + pattern + "$"), handler}
-}
-
-type route struct {
-	method  string
-	regex   *regexp.Regexp
-	handler http.HandlerFunc
 }
 
 func Serve(w http.ResponseWriter, r *http.Request) {
@@ -68,6 +70,15 @@ func Serve(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+}
+
+func GetHttpHandler() *http.ServeMux {
+	httpHandler := http.NewServeMux()
+
+	httpHandler.HandleFunc("/banners/", controllers.GetBanner)
+	httpHandler.HandleFunc("/banners", controllers.GetAllBanners)
+
+	return httpHandler
 }
 
 func main() {

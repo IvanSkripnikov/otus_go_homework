@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gavv/httpexpect/v2"
 )
 
 func TestRoot(t *testing.T) {
@@ -25,20 +27,28 @@ func TestRoot(t *testing.T) {
 	}
 }
 
+func TestBanner(t *testing.T) {
+	handler := GetHttpHandler()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	e := httpexpect.Default(t, server.URL)
+
+	e.GET("/banners/1").
+		Expect().
+		Status(http.StatusOK).JSON().IsObject()
+}
+
 func TestBanners(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/banners", nil)
-	w := httptest.NewRecorder()
-	controllers.GetAllBanners(w, req)
-	res := w.Result()
-	defer res.Body.Close()
+	handler := GetHttpHandler()
 
-	data, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		t.Errorf("Error: %v", err)
-	}
-	stringData := string(data)
+	server := httptest.NewServer(handler)
+	defer server.Close()
 
-	if len(stringData) == 0 {
-		t.Errorf("Expected banners message but got %v", stringData)
-	}
+	e := httpexpect.Default(t, server.URL)
+
+	e.GET("/banners").
+		Expect().
+		Status(http.StatusOK).JSON().Array().NotEmpty()
 }
