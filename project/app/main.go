@@ -21,15 +21,9 @@ var (
 		newRoute("GET", "/banners", controllers.BannersHandler),
 		newRoute("GET", "/banners/([0-9]+)", controllers.BannerHandler),
 		newRoute("GET", "/add_banner_to_slot/([\\S]+)", controllers.AddBannerHandler),
-		newRoute("GET", "/remove_banner_from_slot/([\\S]+)", controllers.RemoveBannerFromSlot),
-		newRoute("GET", "/get_banner_for_show/([\\S]+)", controllers.GetBannerForShow),
-		newRoute("GET", "/event_click/([\\S]+)", controllers.EventClick),
-
-		newRoute("GET", "/tasks", controllers.GetAllHandler),
-		newRoute("POST", "/tasks", controllers.CreateHandler),
-		newRoute("GET", "/tasks/([0-9]+)", controllers.GetHandler),
-		newRoute("PUT", "/tasks/([0-9]+)", controllers.UpdateHandler),
-		newRoute("DELETE", "/tasks/([0-9]+)", controllers.DeleteHandler),
+		newRoute("GET", "/remove_banner_from_slot/([\\S]+)", controllers.RemoveBannerHandler),
+		newRoute("GET", "/get_banner_for_show/([\\S]+)", controllers.GetBannerForShowHandler),
+		newRoute("GET", "/event_click/([\\S]+)", controllers.ClickHandler),
 	}
 )
 
