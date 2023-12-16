@@ -14,7 +14,7 @@ func TestRoot(t *testing.T) {
 	expected := "{\"message\": \"Hello dear friend! Welcome!\"}"
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
-	controllers.HelloPage(w, req)
+	controllers.HelloPageHandler(w, req)
 	res := w.Result()
 	defer res.Body.Close()
 

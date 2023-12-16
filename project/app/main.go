@@ -1,11 +1,12 @@
 package main
 
 import (
-	"app/controllers"
 	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
+
+	"app/controllers"
 )
 
 type route struct {
@@ -16,10 +17,10 @@ type route struct {
 
 var (
 	routes = []route{
-		newRoute("GET", "/", controllers.HelloPage),
-		newRoute("GET", "/banners", controllers.GetAllBanners),
-		newRoute("GET", "/banners/([0-9]+)", controllers.GetBanner),
-		newRoute("GET", "/add_banner_to_slot/([\\S]+)", controllers.AddBannerToSlot),
+		newRoute("GET", "/", controllers.HelloPageHandler),
+		newRoute("GET", "/banners", controllers.BannersHandler),
+		newRoute("GET", "/banners/([0-9]+)", controllers.BannerHandler),
+		newRoute("GET", "/add_banner_to_slot/([\\S]+)", controllers.AddBannerHandler),
 		newRoute("GET", "/remove_banner_from_slot/([\\S]+)", controllers.RemoveBannerFromSlot),
 		newRoute("GET", "/get_banner_for_show/([\\S]+)", controllers.GetBannerForShow),
 		newRoute("GET", "/event_click/([\\S]+)", controllers.EventClick),
@@ -75,8 +76,8 @@ func Serve(w http.ResponseWriter, r *http.Request) {
 func GetHttpHandler() *http.ServeMux {
 	httpHandler := http.NewServeMux()
 
-	httpHandler.HandleFunc("/banners/", controllers.GetBanner)
-	httpHandler.HandleFunc("/banners", controllers.GetAllBanners)
+	httpHandler.HandleFunc("/banners/", controllers.BannerHandler)
+	httpHandler.HandleFunc("/banners", controllers.BannersHandler)
 
 	return httpHandler
 }

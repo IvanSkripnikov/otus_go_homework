@@ -15,7 +15,40 @@ import (
 	"strings"
 )
 
-func GetAllBanners(w http.ResponseWriter, r *http.Request) {
+func BannersHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case "GET":
+		getAllBanners(w, r)
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+func BannerHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case "GET":
+		getBanner(w, r)
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+func AddBannerHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	switch r.Method {
+	case "GET":
+		addBannerToSlot(w, r)
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+func getAllBanners(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	rows, err := database.DB.Query(fmt.Sprintf("SELECT * from %s", "banners"))
 
@@ -46,9 +79,7 @@ func GetAllBanners(w http.ResponseWriter, r *http.Request) {
 	writeSuccess(w, buf.String())
 }
 
-func GetBanner(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
+func getBanner(w http.ResponseWriter, r *http.Request) {
 	var banner models.Banner
 	banner.Id, _ = GetIdFromRequestString(r.URL.Path)
 
@@ -83,7 +114,7 @@ func GetBanner(w http.ResponseWriter, r *http.Request) {
 	writeSuccess(w, buf.String())
 }
 
-func AddBannerToSlot(w http.ResponseWriter, r *http.Request) {
+func addBannerToSlot(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	params, resultString := GetParamsFromQueryString(r.URL.Path)
